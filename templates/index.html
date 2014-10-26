@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <style type="text/css">
+  body {
+    padding-top: 40px; 
+  } 
+  .label.label-white {
+    background: #fff;
+    border: 1px solid #666;
+    color: #666; 
+  }
+  .label.label-blue {
+    background-color: #145fc6;
+  }
+  .label.label-red {
+    background-color: #e72200;
+  }
+  .label.label-green {
+    background-color: #04ca00;
+  }
+  .label.label-cyan {
+    background-color: #0ff;
+    color: #666; 
+  }
+  .label.label-yellow {
+    background-color: #fffa00;
+    color: #666; 
+  }
+  .label.label-purple {
+    background-color: #808;
+  }
+  .label.label-black {
+    background-color: #000;
+  }
+  </style>
+  <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/2.1.1/jquery.min.js"></script>
+  <title>弹幕测试</title>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <h2>TUNA弹幕</h2>
+      <form action="{{ url_for('publish_danmaku') }}?c={{channel}}" method="post" role="form">
+        
+        <div class="form-group" id="position-selection">
+          <label for="position">弹幕位置</label>
+          <div>
+            <label class="radio-inline">
+              <input type="radio" name="position" value="fly" checked> 飞过
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="position" value="top"> 顶部
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="position" value="bottom"> 底部
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group" id="color-selection">
+          <label for="color">颜色</label>
+          <div>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="white" checked> 
+              <span class="label label-white">白</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="blue">
+              <span class="label label-blue">蓝</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="red">
+              <span class="label label-red">红</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="yellow">
+              <span class="label label-yellow">黄</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="cyan">
+              <span class="label label-cyan">青</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="green">
+              <span class="label label-green">绿</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="purple">
+              <span class="label label-purple">紫</span>
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="color" value="black">
+              <span class="label label-black">黑</span>
+            </label>
+          </div>
+        </div>
+         
+        <div class="form-group">
+          <label for="danmaku">弹幕内容</label>
+          <input type="text" class="form-control" id="danmaku" name="content" autocomplete="off" placeholder="在此填写弹幕"> 
+        </div>
+
+        <input type="submit" class="btn btn-success" value="发射弹幕" />
+      </form>  
+    </div> 
+  </div>
+</div>
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+  $('form').submit(function() {
+
+    var data = JSON.stringify({
+      content: $("#danmaku").val(),
+      position: $("#position-selection input:checked").val(),
+      color: $("#color-selection input:checked").val()
+    });
+
+    // console.log(data);
+
+    $.ajax({
+      type: "POST",
+      headers: {"Content-Type": "application/json"},
+      url: $('form').attr("action"),
+      data: data,
+      success: function(){ $("#danmaku").val("");} 
+    });
+
+    return false; 
+  });
+
+});
+
+</script>
+
+</body>
+</html>
