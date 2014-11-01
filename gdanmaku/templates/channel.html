@@ -2,86 +2,85 @@
 {% block title %}{{channel.desc}}{% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-md-8 col-md-offset-2">
-      <h2>{{channel.desc}}</h2>
-      {% if not channel.is_open %}
-      <form class="form-inline" role="form" id="set-password-form">
-        <div class="form-group">
-          <label class="sr-only" for="pub_passwd">频道密码: </label>
-          <input type="password" class="form-control" id="pub_password" placeholder="频道密码">
-          <div class="btn btn-success" id="set-password">设置密码</div>
-        </div>
-      </form>
-      {% endif %}
-      <div id="error_container">
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    <h2>{{channel.desc}}</h2>
+    {% if not channel.is_open %}
+    <form class="form-inline" role="form" id="set-password-form">
+      <div class="form-group">
+        <label class="sr-only" for="pub_passwd">频道密码: </label>
+        <input type="password" class="form-control" id="pub_password" placeholder="频道密码">
+        <div class="btn btn-success" id="set-password">设置密码</div>
       </div>
-      <form id="post-danmaku" action="{{ url_for('api_post_danmaku', cname=channel.name) }}" method="post" role="form">
-        
-        <div class="form-group" id="position-selection">
-          <label for="position">弹幕位置</label>
-          <div>
-            <label class="radio-inline">
-              <input type="radio" name="position" value="fly" checked> 飞过
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="position" value="top"> 顶部
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="position" value="bottom"> 底部
-            </label>
-          </div>
-        </div>
-        
-        <div class="form-group" id="color-selection">
-          <label for="color">颜色</label>
-          <div>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="white" checked> 
-              <span class="label label-white">白</span>
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="blue">
-              <span class="label label-blue">蓝</span>
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="red">
-              <span class="label label-red">红</span>
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="yellow">
-              <span class="label label-yellow">黄</span>
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="cyan">
-              <span class="label label-cyan">青</span>
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="green">
-              <span class="label label-green">绿</span>
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="purple">
-              <span class="label label-purple">紫</span>
-            </label>
-            <label class="radio-inline">
-              <input type="radio" name="color" value="black">
-              <span class="label label-black">黑</span>
-            </label>
-          </div>
-        </div>
-         
-        <div class="form-group">
-          <label for="danmaku">弹幕内容</label>
-          <input type="text" class="form-control" id="danmaku" name="content" autocomplete="off" placeholder="在此填写弹幕"> 
-        </div>
+    </form>
+    {% endif %}
+    <div id="error_container">
+    </div>
+    <form id="post-danmaku" action="{{ url_for('api_post_danmaku', cname=channel.name) }}" method="post" role="form">
 
-        <input type="submit" class="btn btn-success" value="发射弹幕" />
-      </form>  
-    </div> 
-  </div>
+      <div class="form-group" id="position-selection">
+        <label for="position">弹幕位置</label>
+        <div>
+          <label class="radio-inline">
+            <input type="radio" name="position" value="fly" checked> 飞过
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="position" value="top"> 顶部
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="position" value="bottom"> 底部
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="color-selection">
+        <label for="color">颜色</label>
+        <div>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="white" checked> 
+            <span class="label label-white">白</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="blue">
+            <span class="label label-blue">蓝</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="red">
+            <span class="label label-red">红</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="yellow">
+            <span class="label label-yellow">黄</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="cyan">
+            <span class="label label-cyan">青</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="green">
+            <span class="label label-green">绿</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="purple">
+            <span class="label label-purple">紫</span>
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="color" value="black">
+            <span class="label label-black">黑</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="danmaku">弹幕内容</label>
+        <input type="text" class="form-control" id="danmaku" name="content" autocomplete="off" placeholder="在此填写弹幕"> 
+      </div>
+
+      <input type="submit" class="btn btn-success" value="发射弹幕" />
+    </form>  
+  </div> 
 </div>
+
 {% endblock %}
 
 {% block js %}
@@ -89,14 +88,14 @@
 
 $(document).ready(function() {
   var pub_passwd = "";
-  
+
   if($("#set-password").length > 0) {
     $("#set-password").click(function() {
       pub_passwd = $("#pub_password").val(); 
       $("#set-password-form").addClass("hide");
     });
   }
-  
+
   var show_error = function(msg) {
     $("#error_container").html("<div class='alert alert-danger'>" + msg + "</div>"); 
   };

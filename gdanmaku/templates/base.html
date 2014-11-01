@@ -12,8 +12,21 @@
   <title>{% block title %}title{% endblock %} - TUNA 弹幕站</title>
 </head>
 <body>
+<div class="container-fluid">
 {% block body %}
 {% endblock %}
+
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    <hr />
+    <div class="text-center">
+      <div>Source code available under GPLv3 at <a href="https://github.com/tuna/gdanmaku-server">https://github.com/tuna/gdanmaku-server</a> </div>
+      <div>Copyright &copy; TUNA </div>
+    </div>
+  </div>
+</div>
+</div>
+
 {% block js%}
 {% endblock %}
 
