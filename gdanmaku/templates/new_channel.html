@@ -11,7 +11,7 @@
       <div class="alert alert-info">
         <p><strong>说明:</strong></p>
         <ul>
-          <li>频道名称仅有数字、字母、下划线、横线组成</li>
+          <li>频道名称仅有字母、数字、下划线、横线组成, 且以字母开头</li>
           <li>播放密码必填，发布密码选填</li>
         </ul>
       </div>
@@ -91,7 +91,7 @@ $(document).ready(function() {
 
   var validate = function() {
     var valid = true;
-    var namer = /^[a-zA-Z0-9_]{1,}$/;
+    var namer = /^[a-zA-Z][a-zA-Z0-9_\-]{1,}$/;
 
     if(!$("#name").val().match(namer)) {
       show_error("频道名称有误！"); 
