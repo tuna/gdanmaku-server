@@ -1,8 +1,30 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
 import gevent
+import gevent.lock
+import gevent.queue
+import Queue
+
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+
+
+class Subscriber(object):
+
+    def __init__(self, name="ALL", timeout=15):
+        self.name = name
+        self.last_seen = datetime.now()
+        self.timeout = timeout
+        self.queue = gevent.queue.Queue()
+
+    def refresh(self):
+        self.last_seen = datetime.now()
+
+    def exceeded(self):
+        if self.name == "ALL":
+            return False
+
+        return datetime.now() - self.last_seen > timedelta(seconds=self.timeout)
 
 
 class Channel(object):
@@ -19,8 +41,8 @@ class Channel(object):
         self.pub_passwd = generate_password_hash(pub_passwd) \
             if pub_passwd else None
 
-        self.ev_new = gevent.event.Event()
-        self.danmaku_buffer = []
+        self.subscribers = {"ALL": Subscriber("ALL")}
+        self.lock = gevent.lock.RLock()
 
     @property
     def is_open(self):
@@ -35,17 +57,40 @@ class Channel(object):
         return check_password_hash(self.pub_passwd, password)
 
     def new_danmaku(self, danmaku):
-        self.danmaku_buffer.append(danmaku)
-        self.ev_new.set()
+        self.lock.acquire()
+        self._subscriber_gc()
+        for _, s in self.subscribers.iteritems():
+            s.queue.put(danmaku)
+        self.lock.release()
 
-    def pop_danmakus(self):
-        if self.ev_new.wait(timeout=self.timeout):
-            buf = self.danmaku_buffer
-            self.danmaku_buffer = []
-            self.ev_new.clear()
-            return buf
+    def pop_danmakus(self, sname):
+        self.lock.acquire()
+        s = self.subscribers.get(sname, None)
+        if s is None:
+            s = Subscriber(sname)
+            self.subscribers[sname] = s
         else:
-            return []
+            s.refresh()
+        self.lock.release()
+
+        buflen = s.queue.qsize()
+        if buflen > 0:
+            return [s.queue.get_nowait() for _ in range(buflen)]
+        else:
+            try:
+                msg = s.queue.get(timeout=self.timeout)
+                return [msg, ]
+            except Queue.Empty:
+                return []
+
+    def subscriber_gc(self):
+        self.lock.acquire()
+        self._subscriber_gc()
+        self.lock.release()
+
+    def _subscriber_gc(self):
+        self.subscribers = \
+            {k: s for k, s in self.subscribers.iteritems() if not s.exceeded()}
 
 
 class ChannelManager(object):
@@ -69,12 +114,16 @@ class ChannelManager(object):
     def garbage_collector(self):
         print("Starting channel GC")
         while 1:
-            _buf = self.channels.items()
+            _buf = [(k, v) for k, v in self.channels.items()]
             for cname, chan in _buf:
                 if chan.gc_time is None:
                     continue
                 if datetime.now() > chan.gc_time:
                     self.channels.pop(cname)
+
+            _buf = [(k, v) for k, v in self.channels.items()]
+            for _, chan in _buf:
+                chan.subscriber_gc()
 
             gevent.sleep(10*60)
 

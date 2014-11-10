@@ -79,7 +79,24 @@ def api_channel_danmaku(cname):
     if key is None or (not channel.verify_sub_passwd(key)):
         return "Forbidden", 403
 
-    r = channel.pop_danmakus()
+    r = channel.pop_danmakus("ALL")
+    return json.dumps(r)
+
+
+@app.route("/api/v1.1/channels/<cname>/danmaku", methods=["GET"])
+def api_channel_danmaku_1(cname):
+    cm = g.channel_manager
+
+    channel = cm.get_channel(cname)
+    if channel is None:
+        return "Not Found", 404
+
+    sname = request.headers.get("X-GDANMAKU-SUBSCRIBER-ID", "ALL")
+    key = request.headers.get("X-GDANMAKU-AUTH-KEY")
+    if key is None or (not channel.verify_sub_passwd(key)):
+        return "Forbidden", 403
+
+    r = channel.pop_danmakus(sname)
     return json.dumps(r)
 
 
