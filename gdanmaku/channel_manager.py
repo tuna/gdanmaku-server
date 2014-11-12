@@ -26,6 +26,14 @@ class Subscriber(object):
 
         return datetime.now() - self.last_seen > timedelta(seconds=self.timeout)
 
+    def clear_queue(self):
+        if self.queue.qsize() >= 100:
+            for _ in range(80):
+                try:
+                    self.queu.get_nowait()
+                except Queue.Empty:
+                    return
+
 
 class Channel(object):
 
@@ -91,6 +99,8 @@ class Channel(object):
     def _subscriber_gc(self):
         self.subscribers = \
             {k: s for k, s in self.subscribers.iteritems() if not s.exceeded()}
+        s = self.subscribers["ALL"]
+        s.clear_queue()
 
 
 class ChannelManager(object):
