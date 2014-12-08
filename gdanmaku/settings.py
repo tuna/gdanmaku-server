@@ -18,6 +18,7 @@ MEDIA_PATH = os.path.join(FILE_PATH, "media")
 
 # DB
 SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(FILE_PATH, "gdanmaku.sqlite")
+REDIS_PREFIX = "gd_"
 
 
 # vim: ts=4 sw=4 sts=4 expandtab

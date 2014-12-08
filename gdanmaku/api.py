@@ -7,7 +7,8 @@ from . import app
 
 @app.route("/api/v1/channels", methods=["GET"])
 def api_list_channels():
-    pass
+    channels = g.channel_manager.channels(instance=True)
+    return json.dumps({'channels': [c.to_dict(public=True) for c in channels]})
 
 
 @app.route("/api/v1/channels", methods=["POST"])

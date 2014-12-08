@@ -24,7 +24,7 @@ def channel_view(cname):
 
 @app.route("/", methods=["GET"])
 def index():
-    channels = g.channel_manager.channels
+    channels = g.channel_manager.channels(instance=True)
     return render_template("index.html", channels=channels)
 
 

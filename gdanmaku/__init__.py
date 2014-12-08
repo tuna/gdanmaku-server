@@ -1,19 +1,26 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
-from flask import Flask, g
+from gevent.monkey import patch_all
+patch_all()
+
+import redis
 from gevent.wsgi import WSGIServer
+from flask import Flask, g
 from . import settings
 from .channel_manager import ChannelManager
 
 app = Flask(__name__)
 app.config.from_object(settings)
-chan_mgr = ChannelManager(app)
-chan_mgr.new_channel("demo", desc=u"演示频道, 发布、订阅均无需密码")
+r = redis.StrictRedis(host='localhost', port=6379, db=1, socket_timeout=5)
+chan_mgr = ChannelManager(app, r)
+with app.app_context():
+    chan_mgr.new_channel("demo", desc=u"演示频道, 发布、订阅均无需密码")
 
 
 @app.before_request
 def set_channel_manager():
     g.channel_manager = chan_mgr
+    g.r = r
 
 
 from . import views

@@ -12,9 +12,9 @@
           <th> 说明 </th>
         </thead>
         <tbody>
-        {%- for cname, chan in channels.iteritems() %}
+        {%- for chan in channels %}
         <tr>
-          <td><a href="{{ url_for("channel_view", cname=cname) }}">{% if not chan.is_open %}<i class="glyphicon glyphicon-lock"></i>{% endif %} {{ chan.name }}</a> </td>
+          <td><a href="{{ url_for("channel_view", cname=chan.name) }}">{% if not chan.is_open %}<i class="glyphicon glyphicon-lock"></i>{% endif %} {{ chan.name }}</a> </td>
           <td>{{ chan.desc }}</td>
         </tr>
         {% endfor -%}
