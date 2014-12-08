@@ -112,7 +112,7 @@ class Channel(object):
         for st, c in self.subscribers:
             sname, _ = st.split(":")
             bname = Subscriber.buffer(self.name, sname)
-            g.r.rpush(bname, danmaku)
+            g.r.rpush(bname, json.dumps(danmaku))
             if g.r.ttl(bname) < 0:
                 g.r.expire(bname, g.r.ttl(c))
             if g.r.llen(bname) > 20:
@@ -138,7 +138,7 @@ class Channel(object):
         if g.r.exists(bname):
             msg = g.r.lrange(bname, 0, -1)
             g.r.delete(bname)
-            return msg
+            return map(lambda x: json.loads(x), msg)
 
         chan = Subscriber.prefix(self.name) + sname
         p = g.r.pubsub()
@@ -146,7 +146,7 @@ class Channel(object):
         try:
             for msg in p.listen():
                 if msg['type'] == "message":
-                    return [g.r.lpop(bname), ]
+                    return [json.loads(g.r.lpop(bname)), ]
         except redis.TimeoutError:
             return []
 
