@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 import json
 import redis
-import gevent
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app, g
 
@@ -31,7 +30,7 @@ class Subscriber(object):
     @classmethod
     def prefix(cls, cname):
         return current_app.config.get("REDIS_PREFIX") \
-            + cls.SUBSCRIBER_PREFIX + cname + "_chan_"
+            + cls.SUBSCRIBER_PREFIX + cname + "_meta_"
 
     @classmethod
     def buffer(cls, cname, sub_id):
@@ -108,24 +107,16 @@ class Channel(object):
         return check_password_hash(self.pub_passwd, password)
 
     def new_danmaku(self, danmaku):
-        retry = []
         for st, c in self.subscribers:
             sname, _ = st.split(":")
             bname = Subscriber.buffer(self.name, sname)
-            g.r.rpush(bname, json.dumps(danmaku))
             if g.r.ttl(bname) < 0:
                 g.r.expire(bname, g.r.ttl(c))
             if g.r.llen(bname) > 20:
                 g.r.ltrim(bname, -1, -10)
+            g.r.rpush(bname, json.dumps(danmaku))
 
-            n = g.r.publish(c, 1)
-            if n < 1:
-                retry.append(c)
-
-        if len(retry) > 0:
-            gevent.sleep(0.2)
-            for c in retry:
-                g.r.publish(c, 1)
+        g.r.publish(self.key, 1)
 
     def pop_danmakus(self, sname):
 
@@ -140,9 +131,8 @@ class Channel(object):
             g.r.delete(bname)
             return map(lambda x: json.loads(x), msg)
 
-        chan = Subscriber.prefix(self.name) + sname
         p = g.r.pubsub()
-        p.subscribe(chan)
+        p.subscribe(self.key)
         try:
             for msg in p.listen():
                 if msg['type'] == "message":
