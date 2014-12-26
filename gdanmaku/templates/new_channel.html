@@ -126,7 +126,7 @@ $(document).ready(function() {
         "pub_passwd": $("#pub_passwd").val()
       }),
       success: function(data) {
-        document.location.href = JSON.parse(data).url; 
+        document.location.href = data.url; 
       },
       error: function(jqxhr, text) {
         show_error(jqxhr.responseText);
