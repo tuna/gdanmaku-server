@@ -116,8 +116,6 @@ class Channel(object):
                 g.r.ltrim(bname, -1, -10)
             g.r.rpush(bname, json.dumps(danmaku))
 
-        g.r.publish(self.key, 1)
-
     def pop_danmakus(self, sname):
 
         if Subscriber.exists(self.name, sname):
@@ -131,14 +129,19 @@ class Channel(object):
             g.r.delete(bname)
             return map(lambda x: json.loads(x), msg)
 
-        p = g.r.pubsub()
-        p.subscribe(self.key)
-        try:
-            for msg in p.listen():
-                if msg['type'] == "message":
-                    return [json.loads(g.r.lpop(bname)), ]
-        except redis.TimeoutError:
+        ret = g.r.blpop(bname, timeout=5)
+        if ret is None:
             return []
+
+        _, msg = ret
+        return [json.loads(msg), ]
+
+        # try:
+        #     _, msg = g.r.blpop(bname, timeout=5)
+        # except redis.TimeoutError:
+        #     return []
+        # else:
+        #     return [json.loads(msg), ]
 
 
 class ChannelManager(object):

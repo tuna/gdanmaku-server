@@ -11,7 +11,7 @@ from .channel_manager import ChannelManager
 
 app = Flask(__name__)
 app.config.from_object(settings)
-r = redis.StrictRedis(host='localhost', port=6379, db=1, socket_timeout=5)
+r = redis.StrictRedis(host='localhost', port=6379, db=1)
 chan_mgr = ChannelManager(app, r)
 with app.app_context():
     chan_mgr.new_channel("demo", desc=u"演示频道, 发布、订阅均无需密码")
@@ -20,6 +20,10 @@ with app.app_context():
 @app.before_request
 def set_channel_manager():
     g.channel_manager = chan_mgr
+    try:
+        r.ping()
+    except:
+        r.connection_pool.reset()
     g.r = r
 
 

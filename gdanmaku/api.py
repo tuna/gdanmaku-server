@@ -1,14 +1,18 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
 import json
-from flask import request, g
+from flask import request, g, Response
 from . import app
+
+
+def jsonResponse(r):
+    return Response(json.dumps(r), mimetype='application/json')
 
 
 @app.route("/api/v1/channels", methods=["GET"])
 def api_list_channels():
     channels = g.channel_manager.channels(instance=True)
-    return json.dumps({'channels': [c.to_dict(public=True) for c in channels]})
+    return jsonResponse({'channels': [c.to_dict(public=True) for c in channels]})
 
 
 @app.route("/api/v1/channels", methods=["POST"])
@@ -29,7 +33,7 @@ def api_create_channel():
     if g.channel_manager.new_channel(**kwargs) is None:
         return "Channel Existed", 409
 
-    return json.dumps({"url": "/channel/{}".format(form["name"])})
+    return jsonResponse({"url": "/channel/{}".format(form["name"])})
 
 
 @app.route("/api/v1/channels/<cname>", methods=["GET"])
@@ -81,7 +85,7 @@ def api_channel_danmaku(cname):
         return "Forbidden", 403
 
     r = channel.pop_danmakus("ALL")
-    return json.dumps(r)
+    return jsonResponse(r)
 
 
 @app.route("/api/v1.1/channels/<cname>/danmaku", methods=["GET"])
@@ -98,7 +102,7 @@ def api_channel_danmaku_1(cname):
         return "Forbidden", 403
 
     r = channel.pop_danmakus(sname)
-    return json.dumps(r)
+    return jsonResponse(r)
 
 
 # vim: ts=4 sw=4 sts=4 expandtab
