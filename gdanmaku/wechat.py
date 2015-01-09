@@ -23,10 +23,9 @@ def api_wechat_handle():
     ToUserName = xml_recv.find("ToUserName").text  
     FromUserName = xml_recv.find("FromUserName").text  
     Content = xml_recv.find("Content").text
-    matchjoin = re.compile('^join(?:\s)(\S+)(?:\s)(\S+)')
+    matchjoin = re.compile(u'^加入(?:\s)(\S+)(?:\s)(\S+)')
     match = matchjoin.split(Content)
     cm = g.channel_manager
-    print match
     if len( match ) is 4:
         if not (match[1] and match[2]):
             return make_return(FromUserName,ToUserName,"命令错误哦，回复帮助看看使用说明吧")
@@ -39,7 +38,7 @@ def api_wechat_handle():
         g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), match[1])
         g.r.set(''.join(['wechat.', FromUserName, '.ch_key']), match[2]);
         return make_return(FromUserName, ToUserName, "设置通道成功，发射吧")
-    matchsetting = re.compile("^set(?:\s)(\S+)(?:\s)(\S+)")
+    matchsetting = re.compile(u"^设置(?:\s)(\S+)(?:\s)(\S+)")
     match = matchsetting.split(Content)
     if len(match) > 2:
         option = option_trans(match[1],match[2])
@@ -49,7 +48,7 @@ def api_wechat_handle():
         if option[1] is not None :
             g.r.set(''.join(['wechat.', FromUserName,'.ch_color']),option[1])
         return make_return(FromUserName, ToUserName, "设置成功，发射吧！")
-    matchhelp = re.compile("^[help|Help]")
+    matchhelp = re.compile(u"^[帮助|help|Help]")
     match = matchhelp.match(Content)
     if match:
         return make_return(FromUserName, ToUserName, "来发射弹幕吧！\n回复 加入+频道名称+发射密码 加入频道\n如“加入 sheyifa 123456”\n回复 设置+位置+颜色 设置弹幕属性\n如“设置 顶部 白”\n可选的位置有：飞过 顶部 底部\n可选的颜色有：蓝 白 红 黄 青 绿 紫 黑")
@@ -73,7 +72,7 @@ def api_wechat_handle():
         "style": ch_color,
         "position": ch_pos
     }
-    channel.new_danmaku(danmaku)
+    t = channel.new_danmaku(danmaku)
     return make_return(FromUserName, ToUserName, "发射成功！")
 
 
@@ -97,14 +96,15 @@ def make_return(fromuser, touser,content):
     return response
 
 def option_trans(position, color):
-    colors = {'蓝':'blue','白':'white','红':'red','黄':'yellow','青':'cyan','绿':'green','紫':'purple','黑':'black'}
-    positions = {'飞过': 'fly','顶部': 'top','底部': 'buttom'}
-    if postions[position] is not None:
+    colors = {u'蓝':'blue',u'白':'white',u'红':'red',u'黄':'yellow',u'青':'cyan',u'绿':'green',u'紫':'purple',u'黑':'black'}
+    positions = {u'飞过': 'fly',u'顶部': 'top',u'底部': 'buttom'}
+    ret = [None,None]
+    if positions[position] is not None:
         ret[0] = positions[position]
     else :
         ret[0] = None
     if colors[color] is not None:
-        ret[1] = colors[position]
+        ret[1] = colors[color]
     else :
         ret[1] = None
     return ret
