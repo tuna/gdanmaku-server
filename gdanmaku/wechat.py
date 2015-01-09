@@ -87,7 +87,7 @@ def wechat_auth():
     s = ''.join(s)  
     if ( hashlib.sha1(s).hexdigest() == signature ):    
         return True
-    return True #False
+    return False
   
 def make_return(fromuser, touser,content):
     reply = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA[%s]]></Content><FuncFlag>0</FuncFlag></xml>"
