@@ -29,7 +29,7 @@ def set_channel_manager():
 
 from . import views
 from . import api
-
+from . import wechat
 
 def main():
     app.debug = True
