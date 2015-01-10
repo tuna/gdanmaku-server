@@ -15,7 +15,7 @@ def jsonResponse(r):
 def api_wechat_handle():
     if wechat_auth() is False :
         return "BAD TOKEN"
-    if request.method is 'GET' :
+    if request.method == 'GET' :
     	echostr = request.args.get('echostr', '')
         if echostr is not '':
             return echostr    
@@ -23,22 +23,24 @@ def api_wechat_handle():
     ToUserName = xml_recv.find("ToUserName").text  
     FromUserName = xml_recv.find("FromUserName").text  
     Content = xml_recv.find("Content").text
-    matchjoin = re.compile(u'^加入(?:\s)(\S+)(?:\s)(\S+)')
+    matchjoin = re.compile(u'^加入(?:\s)*(\S+)(?:\s)*(\S+)?')
     match = matchjoin.split(Content)
     cm = g.channel_manager
-    if len( match ) is 4:
-        if not (match[1] and match[2]):
+    if len( match ) > 2:
+        if not (match[1]):
             return make_return(FromUserName,ToUserName,"命令错误哦，回复帮助看看使用说明吧")
         channel = cm.get_channel(match[1])
         if channel is None:
             return make_return(FromUserName, ToUserName,"木有这个通道。。。")
-        key = match[2]
-        if key is None or (not channel.verify_pub_passwd(key)):
+        if channel.is_open:
+            g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), match[1])
+            return make_return(FromUserName, ToUserName,"加入成功")
+        if match[2] is None or (not channel.verify_pub_passwd(match[2])):
             return make_return(FromUserName, ToUserName,"密码不对。。在试试？")
         g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), match[1])
-        g.r.set(''.join(['wechat.', FromUserName, '.ch_key']), match[2]);
+        g.r.set(''.join(['wechat.', FromUserName, '.ch_key']), match[2])
         return make_return(FromUserName, ToUserName, "设置通道成功，发射吧")
-    matchsetting = re.compile(u"^设置(?:\s)(\S+)(?:\s)(\S+)")
+    matchsetting = re.compile(u"^设置(?:\s)*(\S+)(?:\s)*(\S+)?")
     match = matchsetting.split(Content)
     if len(match) > 2:
         option = option_trans(match[1],match[2])
@@ -59,9 +61,11 @@ def api_wechat_handle():
     if ch_name is None:
         return make_return(FromUserName, ToUserName, "还没有加入通道或者超时了T_T")
     channel = cm.get_channel(ch_name)
+    if ch_key is None:
+        ch_key = ''
     if channel is None:
         return make_return(FromUserName, ToUserName, "频道已經关闭了T_T")
-    if not channel.verify_pub_passwd(ch_key):
+    if not channel.is_open and not channel.verify_pub_passwd(ch_key):
         return make_return(FromUserName, ToUserName, "密码错误T_T")
     if ch_pos is None:
         ch_pos = 'fly'
@@ -89,7 +93,7 @@ def wechat_auth():
         return True
     return False
   
-def make_return(fromuser, touser,content):
+def make_return(touser, fromuser, content):
     reply = "<xml><ToUserName><![CDATA[%s]]></ToUserName><FromUserName><![CDATA[%s]]></FromUserName><CreateTime>%s</CreateTime><MsgType><![CDATA[text]]></MsgType><Content><![CDATA[%s]]></Content><FuncFlag>0</FuncFlag></xml>"
     response = make_response( reply % (touser, fromuser, str(int(time.time())), content ) )
     response.content_type = 'application/xml'
@@ -99,14 +103,11 @@ def option_trans(position, color):
     colors = {u'蓝':'blue',u'白':'white',u'红':'red',u'黄':'yellow',u'青':'cyan',u'绿':'green',u'紫':'purple',u'黑':'black'}
     positions = {u'飞过': 'fly',u'顶部': 'top',u'底部': 'buttom'}
     ret = [None,None]
-    if positions[position] is not None:
+    if positions.has_key(position):
         ret[0] = positions[position]
-    else :
-        ret[0] = None
-    if colors[color] is not None:
-        ret[1] = colors[color]
-    else :
-        ret[1] = None
+    if color is not None:
+        if colors.has_key(color):
+            ret[1] = colors[color]
     return ret
 
 # vim: ts=4 sw=4 sts=4 expandtab
