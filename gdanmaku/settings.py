@@ -21,6 +21,11 @@ SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(FILE_PATH, "gdanmaku.sqlit
 REDIS_PREFIX = "gd_"
 
 # WECHAT
-WECHAT_TOKEN = "gdanmaku"
+WECHAT_TOKEN = ""
+
+try:
+    from settings_local import *
+except:
+    pass
 
 # vim: ts=4 sw=4 sts=4 expandtab
