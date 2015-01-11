@@ -96,16 +96,16 @@ def api_wechat_handle():
 
     if ch_name is None:
         return make_reply(
-            FromUserName, ToUserName, u"还没有加入频道或者超时了 T_T")
+            FromUserName, ToUserName, "还没有加入频道或者超时了 T_T")
 
     channel = cm.get_channel(ch_name)
     if ch_key is None:
         ch_key = ''
     if channel is None:
-        return make_reply(FromUserName, ToUserName, u"频道已經关闭了 T_T")
+        return make_reply(FromUserName, ToUserName, "频道已經关闭了 T_T")
 
     if not channel.is_open and not channel.verify_pub_passwd(ch_key):
-        return make_reply(FromUserName, ToUserName, u"密码错误 T_T")
+        return make_reply(FromUserName, ToUserName, "密码错误 T_T")
 
     if ch_pos is None:
         ch_pos = 'fly'
