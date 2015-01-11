@@ -1,40 +1,40 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
 import json
-import redis
+# import redis
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import current_app, g
+# from flask import current_app
 
 
 class Subscriber(object):
     SUBSCRIBER_PREFIX = "subscriber_"
 
     @classmethod
-    def exists(cls, cname, sub_id):
-        return g.r.exists(cls.prefix(cname) + sub_id)
+    def exists(cls, r, cname, sub_id):
+        return r.exists(cls.prefix(cname) + sub_id)
 
     @classmethod
-    def create(cls, cname, sub_id, ttl=10):
+    def create(cls, r, cname, sub_id, ttl=10):
         key = cls.prefix(cname) + sub_id
-        g.r.setex(key, ttl, "{}:{}".format(sub_id, ttl))
+        r.setex(key, ttl, "{}:{}".format(sub_id, ttl))
 
     @classmethod
-    def refresh(cls, cname, sub_id):
+    def refresh(cls, r, cname, sub_id):
         key = cls.prefix(cname) + sub_id
-        ttl = int(g.r.get(key).split(":")[1])
-        g.r.expire(key, ttl)
+        ttl = int(r.get(key).split(":")[1])
+        r.expire(key, ttl)
         bkey = cls.buffer(cname, sub_id)
-        if g.r.exists(bkey):
-            g.r.expire(bkey, ttl)
+        if r.exists(bkey):
+            r.expire(bkey, ttl)
 
     @classmethod
     def prefix(cls, cname):
-        return current_app.config.get("REDIS_PREFIX") \
+        return ChannelManager.REDIS_PREFIX \
             + cls.SUBSCRIBER_PREFIX + cname + "_meta_"
 
     @classmethod
     def buffer(cls, cname, sub_id):
-        return current_app.config.get("REDIS_PREFIX") \
+        return ChannelManager.REDIS_PREFIX \
             + cls.SUBSCRIBER_PREFIX + cname + "_buffer_" + sub_id
 
 
@@ -44,7 +44,7 @@ class Channel(object):
 
     @classmethod
     def prefix(cls):
-        return current_app.config.get("REDIS_PREFIX") + cls.CHANNEL_PREFIX
+        return ChannelManager.REDIS_PREFIX + cls.CHANNEL_PREFIX
 
     def __init__(self, name, desc="Test", ttl=-1, sub_passwd="", pub_passwd=None):
         self.name = name
@@ -60,10 +60,11 @@ class Channel(object):
 
     @property
     def subscribers(self):
-        return [(g.r.get(k), k) for k in g.r.keys(Subscriber.prefix(self.name)+"*")]
+        return [(self.r.get(k), k)
+                for k in self.r.keys(Subscriber.prefix(self.name)+"*")]
 
     @staticmethod
-    def from_json(jstr):
+    def from_json(jstr, manager):
         dchan = json.loads(jstr)
         if 'name' not in dchan:
             return None
@@ -75,6 +76,8 @@ class Channel(object):
         c = Channel(name, desc)
         c.sub_passwd = sub_passwd
         c.pub_passwd = pub_passwd
+        c.m = manager
+        c.r = manager.r
         return c
 
     def to_dict(self, public=False):
@@ -110,26 +113,26 @@ class Channel(object):
         for st, c in self.subscribers:
             sname, _ = st.split(":")
             bname = Subscriber.buffer(self.name, sname)
-            if g.r.ttl(bname) < 0:
-                g.r.expire(bname, g.r.ttl(c))
-            if g.r.llen(bname) > 20:
-                g.r.ltrim(bname, -1, -10)
-            g.r.rpush(bname, json.dumps(danmaku))
+            if self.r.ttl(bname) < 0:
+                self.r.expire(bname, self.r.ttl(c))
+            if self.r.llen(bname) > 20:
+                self.r.ltrim(bname, -1, -10)
+            self.r.rpush(bname, json.dumps(danmaku))
 
     def pop_danmakus(self, sname):
 
-        if Subscriber.exists(self.name, sname):
-            Subscriber.refresh(self.name, sname)
+        if Subscriber.exists(self.r, self.name, sname):
+            Subscriber.refresh(self.r, self.name, sname)
         else:
-            Subscriber.create(self.name, sname)
+            Subscriber.create(self.r, self.name, sname)
 
         bname = Subscriber.buffer(self.name, sname)
-        if g.r.exists(bname):
-            msg = g.r.lrange(bname, 0, -1)
-            g.r.delete(bname)
+        if self.r.exists(bname):
+            msg = self.r.lrange(bname, 0, -1)
+            self.r.delete(bname)
             return map(lambda x: json.loads(x), msg)
 
-        ret = g.r.blpop(bname, timeout=5)
+        ret = self.r.blpop(bname, timeout=5)
         if ret is None:
             return []
 
@@ -146,13 +149,16 @@ class Channel(object):
 
 class ChannelManager(object):
 
+    REDIS_PREFIX = None
+
     def __init__(self, app, r):
         self.app = app
         self.r = r   # redis client
+        ChannelManager.REDIS_PREFIX = app.config.get("REDIS_PREFIX")
 
     def channels(self, instance=False):
         keys = self.r.keys(Channel.prefix()+"*")
-        return [Channel.from_json(self.r.get(k)) for k in keys] \
+        return [Channel.from_json(self.r.get(k), self) for k in keys] \
             if instance else [self.r.get(k) for k in keys]
 
     def new_channel(self, name, **kwargs):
@@ -168,7 +174,7 @@ class ChannelManager(object):
 
     def get_channel(self, name):
         key = Channel.prefix() + name
-        return Channel.from_json(self.r.get(key) or "{}")
+        return Channel.from_json(self.r.get(key) or "{}", self)
 
 
 # vim: ts=4 sw=4 sts=4 expandtab
