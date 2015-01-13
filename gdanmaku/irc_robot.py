@@ -1,8 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
-from gevent import socket, spawn
-from time import time, sleep
-import string
+from random import randint
+from gevent import socket, spawn, sleep
 import re
 
 
@@ -14,180 +13,191 @@ class IRCManager(object):
         self.bot_list = {}
 
     def connect_channel(self, dm_chan, irc_chan):
-        self.bot_list[dm_chan] = IRCbot()
-        self.bot_list[dm_chan].HOST = "card.freenode.net"
-        self.bot_list[dm_chan].PORT = 6666
-        self.bot_list[dm_chan].channel = irc_chan
-        self.bot_list[dm_chan].method = "CHANNEL"
-        self.bot_list[dm_chan].dmch = self.cm.get_channel(dm_chan)
-        self.bot_list[dm_chan].manager = self
-        if self.bot_list[dm_chan].check():
-            spawn(self.bot_list[dm_chan].run)
+        self.bot_list[dm_chan] = IRCbot(
+            host="card.freenode.net",
+            port=6666,
+            nick="dmbot",
+            dm_chan=self.cm.get_channel(dm_chan),
+            irc_chan=irc_chan,
+            manager=self,
+            timeout=10,
+        )
+
+        spawn(self.bot_list[dm_chan].run)
 
 
 class IRCbot(object):
-    def __init__(self):
-        self.HOST = None
-        self.PORT = None
-        self.NICK = "dmbot_"
-        self.IDENT= "dmbot_"
-        self.REALNAME="DANMAKU"
-        self.channel = None
-        self.timeout = 180
-        self.dmch = None
-        self.dmpw = None
-        self.pingout = 5
-        self.thread_stop = True
-        self.ss = socket.socket()
-        self.checked = False
-        self.method = "MSG"  # CHANNEL OR MSG
-        self.online = False
-        self.manager = None
+    REALNAME = "TUNA DanmakuBot"
 
-    def run(self):  # Overwrite run() method, put what you want the thread do here
-        if not self.checked or not self.online:
-            return None
+    def __init__(self, host, port, nick, dm_chan,
+                 irc_chan=None, manager=None, timeout=60):
+
+        self.HOST = host
+        self.PORT = port
+        self.NICK = nick
+        self.channel = irc_chan
+        self.dm_chan = dm_chan
+        self._timeout = timeout
+
+        self.method = "MSG"  # CHANNEL OR MSG
+        self.manager = manager
+
+    def run(self):
+
         if not self.manager:
             return None
 
-        logger = self.manager.app.logger
-        last_ping = time()
+        self.irc_init()
 
+        rspace = re.compile(r'\s+')
+        for line in self.get_server_msg():
+            # print(line)
+            if not line:
+                print("bot stopped")
+                break
+
+            if line[0] == ':':
+                prefix, line = rspace.split(line, 1)
+                nick = prefix.split('!')[0][1:]
+            else:
+                nick = None
+
+            cmd, params = rspace.split(line, 1)
+
+            if cmd == 'PING':
+                self.do_pong(params)
+
+            elif cmd == 'PONG':
+                # print("PONG")
+                pass
+
+            elif cmd == 'JOIN':
+                print("joined channel %s" % params)
+                if not params == self.channel:
+                    self.online = False
+
+            elif cmd == 'PRIVMSG':
+                targets, content = rspace.split(params, 1)
+
+                if not content[0] == ':':
+                    continue
+
+                content = content[1:]
+
+                for target in targets.split(','):
+                    if target[0] == '#' and self.method != 'CHANNEL':
+                        self.do_privmsg(targets, "Please msg me in private")
+                    else:
+                        if self.shoot(content):
+                            self.do_privmsg(nick, 'Shoot!')
+                        else:
+                            self.do_privmsg(targets, 'Server Error!')
+
+            elif cmd == '433':
+                # nick name existed
+                nick = self.gen_nickname(self.NICK)
+                self.do_login(nick)
+
+            elif cmd == '001':
+                # welcome message
+                # self.checked = True
+                self.irc_online = True
+                self.do_join()
+
+            else:
+                # Other commands
+                continue
+
+    def get_server_msg(self):
+        # Generator of server messages
         last_buf = ''
+        retry = 3
         while 1:
-            # 判断是否存活
-            pinging = False
-            if time()-last_ping > self.timeout:
-                self.ss.send("PING :TIMEOUTCHECK\r\n")
-                pinging = True
-            # 获得buffer并分离buffer的每一行
+            try:
+                buf = self._ss.recv(1024)
+            except socket.timeout:
+                retry -= 1
+                if retry >= 0:
+                    self.do_ping()
+                else:
+                    print("Reconnect")
+                    self._ss.close()
+                    self.irc_init()
+                continue
+            except socket.error:
+                yield None
 
-            buf = self.ss.recv(1024)
+            if not buf:
+                yield None
+
+            retry = 3
             lines = (last_buf + buf).split('\r\n')
             last_buf = '' if buf.endswith('\r\n') else lines.pop()
-
-            # readbuffer = self.ss.recv(1024)
-            # temp = string.split(readbuffer, "\n")
-            # readbuffer = temp.pop()
-
-            # 对每一行处理
-            rspace = re.compile(r'\s+')
             for line in lines:
-                if not line:
-                    continue
+                if line:
+                    yield line
 
-                if line[0] == ':':
-                    prefix, line = rspace.split(line, 1)
-                    nick = prefix.split('!')[0]
-                else:
-                    nick = None
-
-                cmd, params = rspace.split(line, 1)
-
-                if cmd == 'PING':
-                    self.ss.send("PONG " + params + '\r\n')
-                    pinging = False
-                    last_ping = time()
-
-                elif cmd == 'PONG':
-                    pinging = False
-                    last_ping = time()
-
-                elif cmd == 'JOIN':
-                    logger.info("joined channel %s" % params)
-                    if not params == self.channel:
-                        self.online = False
-
-                elif cmd == 'PRIVMSG':
-                    targets, content = rspace.split(params, 1)
-
-                    if not content[0] == ':':
-                        continue
-
-                    content = content[1:]
-
-                    for target in targets.split(','):
-                        if target[0] == '#':
-                            if self.method == 'CHANNEL':
-                                if self.shoot(content):
-                                    self.ss.send(' '.join([
-                                        "PRIVMSG",
-                                        nick,
-                                        'Shoot!\r\n',
-                                    ]))
-                                else:
-                                    self.ss.send(' '.join([
-                                        "PRIVMSG",
-                                        targets,
-                                        'Server Error\r\n',
-                                    ]))
-                            else:
-                                self.ss.send(' '.join([
-                                    'PRIVMSG',
-                                    targets,
-                                    'Please msg me in private\r\n',
-                                ]))
-                        else:
-                            if self.shoot(content):
-                                self.ss.send(' '.join([
-                                    "PRIVMSG",
-                                    nick,
-                                    'Shoot!\r\n',
-                                ]))
-                            else:
-                                self.ss.send(' '.join([
-                                    "PRIVMSG",
-                                    nick,
-                                    'Server Error\r\n',
-                                ]))
-
-                else:
-                    # Other commands
-                    continue
-
-            if pinging is True:
-                if(time() - last_ping > (self.timeout + self.pingout)):
-                    # print "TimeOut,Stop"
-                    self.stop()
-
-    def shoot(self, content):
-        if not self.dmch.is_open:
-            key = self.dmpw
-            if key is None or (not self.dmch.verify_pub_passwd(key)):
-                return False
+    def shoot(self, content, style='white', position='fly'):
+        # if not self.dmch.is_open:
+        #     key = self.dmpw
+        #     if key is None or (not self.dmch.verify_pub_passwd(key)):
+        #         return False
 
         danmaku = {
             "text": content,
-            "style": "white",
-            "position": "fly"
+            "style": style,
+            "position": position
         }
-        self.dmch.new_danmaku(danmaku)
+        self.dm_chan.new_danmaku(danmaku)
         return True
 
-    def check(self):
-        if self.HOST is None or self.PORT is None or self.dmch is None:
-            return False
+    def irc_init(self):
+        self.irc_online = False
+        self.do_connect()
+        self.do_login()
 
-        self.ss.connect((self.HOST, self.PORT))
-        self.ss.send("NICK %s\r\n" % self.NICK)
-        self.ss.send("USER %s %s * :%s\r\n" % (self.IDENT, self.HOST, self.REALNAME))
+    def do_connect(self):
+        self._ss = socket.socket()
+        self._ss.settimeout(self._timeout)
+        self._ss.connect((self.HOST, self.PORT), )
 
+    def do_login(self, nick=None):
+        if nick is None:
+            nick = self.NICK
+        self._ss.send("NICK %s\r\n" % nick)
+        self._ss.send(
+            "USER %s %s * :%s\r\n" % (nick, self.HOST, self.REALNAME))
+
+    def do_join(self):
         if self.channel is None:
             self.method = "MSG"
         else:
-            self.ss.send("JOIN %s\r\n" % self.channel)
-            # self.ss.send("PRIVMSG %s Hello\r\n" % self.channel)
+            self._ss.send("JOIN %s\r\n" % self.channel)
+            self.method = "CHANNEL"
+            self.do_privmsg(
+                self.channel,
+                ("Hi otaku oniichan,"
+                 " contents in this room will be played as danmaku")
+            )
 
-        self.checked = True
-        self.online = True
-        return True
+    def do_ping(self):
+        # print("PING")
+        self._ss.send("PING :TIMEOUTCHECK\r\n")
+
+    def do_pong(self, params):
+        self._ss.send("PONG " + params + '\r\n')
+
+    def do_privmsg(self, target, msg):
+        # print(' '.join(["PRIVMSG", target, ':'+msg+'\r\n']))
+        self._ss.send(' '.join(["PRIVMSG", target, ':'+msg+'\r\n']))
 
     def stop(self):
-        self.thread_stop = True
-        self.ss.send("QUIT")
-        self.ss.close()
-        self.online = False
-        self.checked = False
+        self._ss.send("QUIT bye~\r\n")
+        self._ss.close()
+
+    @classmethod
+    def gen_nickname(cls, nickname):
+        return "%s%d" % (nickname, randint(1000, 9999))
 
 
 def test():
