@@ -27,6 +27,7 @@ class IRCManager(object):
         )
 
         spawn(self.bot_list[dm_chan].run)
+        spawn(self.bot_list[dm_chan].expire)
 
 
 class IRCbot(object):
@@ -258,8 +259,18 @@ class IRCbot(object):
         self._ss.send(' '.join(["PRIVMSG", target, ':'+msg+'\r\n']))
 
     def stop(self):
+        for k in self.r.keys(self.REDIS_PREFIX + "IRC." + self.channel + "*"):
+            self.r.delete(k)
+
         self._ss.send("QUIT bye~\r\n")
         self._ss.close()
+
+    def expire(self):
+        # sleep(20)
+        # self.stop()
+        if self.dm_chan._ttl > 0:
+            sleep(self.dm_chan._ttl * 60 * 60)
+            self.stop()
 
     @classmethod
     def gen_nickname(cls, nickname):
