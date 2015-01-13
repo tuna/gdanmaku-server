@@ -71,9 +71,10 @@ class Channel(object):
 
         name = dchan['name']
         desc = dchan.get('desc', 'Test')
+        ttl = dchan.get('_ttl', -1)
         sub_passwd = dchan.get('sub_passwd', "")
         pub_passwd = dchan.get('pub_passwd', None)
-        c = Channel(name, desc)
+        c = Channel(name, desc, ttl)
         c.sub_passwd = sub_passwd
         c.pub_passwd = pub_passwd
         c.m = manager

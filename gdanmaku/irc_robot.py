@@ -1,8 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
+import re
 from random import randint
 from gevent import socket, spawn, sleep
-import re
+
+from .shared import DM_COLORS, DM_COLOR_TRANS, DM_POSITIONS, DM_POSITION_TRANS
 
 
 class IRCManager(object):
@@ -11,15 +13,16 @@ class IRCManager(object):
         self.app = app
         self.cm = chan_mgr
         self.bot_list = {}
+        IRCbot.REDIS_PREFIX = app.config.get("REDIS_PREFIX")
 
     def connect_channel(self, dm_chan, irc_chan):
         self.bot_list[dm_chan] = IRCbot(
+            manager=self,
             host="card.freenode.net",
             port=6666,
             nick="dmbot",
             dm_chan=self.cm.get_channel(dm_chan),
             irc_chan=irc_chan,
-            manager=self,
             timeout=10,
         )
 
@@ -28,19 +31,22 @@ class IRCManager(object):
 
 class IRCbot(object):
     REALNAME = "TUNA DanmakuBot"
+    REDIS_PREFIX = ""
 
-    def __init__(self, host, port, nick, dm_chan,
-                 irc_chan=None, manager=None, timeout=60):
+    def __init__(self, manager, host, port, nick, dm_chan,
+                 irc_chan=None, timeout=60):
 
         self.HOST = host
         self.PORT = port
         self.NICK = nick
+        self._nick = nick
         self.channel = irc_chan
         self.dm_chan = dm_chan
         self._timeout = timeout
 
         self.method = "MSG"  # CHANNEL OR MSG
         self.manager = manager
+        self.r = self.manager.cm.r
 
     def run(self):
 
@@ -78,25 +84,16 @@ class IRCbot(object):
 
             elif cmd == 'PRIVMSG':
                 targets, content = rspace.split(params, 1)
-
                 if not content[0] == ':':
                     continue
 
                 content = content[1:]
-
-                for target in targets.split(','):
-                    if target[0] == '#' and self.method != 'CHANNEL':
-                        self.do_privmsg(targets, "Please msg me in private")
-                    else:
-                        if self.shoot(content):
-                            self.do_privmsg(nick, 'Shoot!')
-                        else:
-                            self.do_privmsg(targets, 'Server Error!')
+                self.handle_text_message(nick, targets, content)
 
             elif cmd == '433':
                 # nick name existed
-                nick = self.gen_nickname(self.NICK)
-                self.do_login(nick)
+                self.NICK = self.gen_nickname(self._nick)
+                self.do_login(self.NICK)
 
             elif cmd == '001':
                 # welcome message
@@ -107,6 +104,66 @@ class IRCbot(object):
             else:
                 # Other commands
                 continue
+
+    def handle_text_message(self, nick, targets, content):
+        if nick == self.NICK:
+            return
+
+        for target in targets.split(','):
+            if target[0] == '#' and self.method != 'CHANNEL':
+                self.do_privmsg(targets, "Please msg me in private")
+                continue
+
+            if content.startswith(".dmopt"):
+                tokens = content.split()
+                if len(tokens) == 1:
+                    self.do_privmsg(targets, "invalid command!")
+                    continue
+                tokens.pop(0)
+                color = tokens.pop(0)
+                if color not in DM_COLORS:
+                    if color not in DM_COLOR_TRANS:
+                        self.do_privmsg(targets, 'invalid color!')
+                        continue
+                    color = DM_COLOR_TRANS[color]
+
+                if len(tokens) == 0:
+                    self.set_danmaku_pref(color)
+                else:
+                    pos = tokens.pop(0)
+                    if pos not in DM_POSITIONS:
+                        if pos not in DM_POSITION_TRANS:
+                            self.do_privmsg(targets, 'invalid position!')
+                            continue
+                        pos = DM_POSITION_TRANS[pos]
+                    self.set_danmaku_pref(nick, color, pos)
+
+            else:
+                color, pos = self.get_danmaku_pref(nick)
+                if self.shoot(content, color, pos):
+                    self.do_privmsg(nick, 'Shoot!')
+                else:
+                    self.do_privmsg(targets, 'Server Error!')
+
+    def set_danmaku_pref(self, nick, color, pos='fly'):
+        ckey = self.REDIS_PREFIX + \
+            ".".join(["IRC", self.channel, nick, "color"])
+        pkey = self.REDIS_PREFIX + \
+            ".".join(["IRC", self.channel, nick, "pos"])
+        self.r.set(ckey, color)
+        if self.dm_chan._ttl > 0:
+            self.r.expire(ckey, self.dm_chan._ttl * 60 * 60)
+        self.r.set(pkey, pos)
+        if self.dm_chan._ttl > 0:
+            self.r.expire(pkey, self.dm_chan._ttl * 60 * 60)
+        self.do_privmsg(nick, "danmaku options set as: %s, %s" % (color, pos))
+
+    def get_danmaku_pref(self, nick):
+        ckey = self.REDIS_PREFIX + \
+            ".".join(["IRC", self.channel, nick, "color"])
+        pkey = self.REDIS_PREFIX + \
+            ".".join(["IRC", self.channel, nick, "pos"])
+        return (self.r.get(ckey) or "blue", self.r.get(pkey) or "fly")
 
     def get_server_msg(self):
         # Generator of server messages
@@ -137,7 +194,7 @@ class IRCbot(object):
                 if line:
                     yield line
 
-    def shoot(self, content, style='white', position='fly'):
+    def shoot(self, content, color='white', position='fly'):
         # if not self.dmch.is_open:
         #     key = self.dmpw
         #     if key is None or (not self.dmch.verify_pub_passwd(key)):
@@ -145,7 +202,7 @@ class IRCbot(object):
 
         danmaku = {
             "text": content,
-            "style": style,
+            "style": color,
             "position": position
         }
         self.dm_chan.new_danmaku(danmaku)
