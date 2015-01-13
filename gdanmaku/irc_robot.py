@@ -138,6 +138,15 @@ class IRCbot(object):
                         pos = DM_POSITION_TRANS[pos]
                     self.set_danmaku_pref(nick, color, pos)
 
+            elif content.startswith(".dmhelp"):
+                if self.method == "CHANNEL":
+                    self.do_privmsg(targets, "type anything to send danmaku")
+                else:
+                    self.do_privmsg(targets, "'/msg %s ooxx' to send danmaku" % self.NICK)
+
+                self.do_privmsg(targets, ".dmopt <color> [position]: set danmaku options")
+                self.do_privmsg(targets, ".dmhelp: print this message")
+
             else:
                 color, pos = self.get_danmaku_pref(nick)
                 if self.shoot(content, color, pos):
@@ -233,8 +242,8 @@ class IRCbot(object):
             self.method = "CHANNEL"
             self.do_privmsg(
                 self.channel,
-                ("Hi otaku oniichan,"
-                 " contents in this room will be played as danmaku")
+                ("主人, 我是你的弹幕喵！"
+                 "发送 .dmhelp 查询我的正确打开方式喵！")
             )
 
     def do_ping(self):
