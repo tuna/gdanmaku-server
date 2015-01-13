@@ -47,8 +47,8 @@ from . import wechat
 
 def main():
     app.debug = True
-    http_server = WSGIServer(('', 5000), app)
-    print("Serving at 0.0.0.0:5000")
+    http_server = WSGIServer(('', 4000), app)
+    print("Serving at 0.0.0.0:4000")
     http_server.serve_forever()
 
 

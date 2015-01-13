@@ -2,9 +2,7 @@
 # -*- coding:utf-8 -*-
 from gevent import socket, spawn
 from time import time, sleep
-#from flask import g
 import string
-import redis
 import re
 
 
@@ -22,6 +20,7 @@ class IRCManager(object):
         self.bot_list[dm_chan].channel = irc_chan
         self.bot_list[dm_chan].method = "CHANNEL"
         self.bot_list[dm_chan].dmch = self.cm.get_channel(dm_chan)
+        self.bot_list[dm_chan].manager = self
         if self.bot_list[dm_chan].check():
             spawn(self.bot_list[dm_chan].run)
 
@@ -42,80 +41,113 @@ class IRCbot(object):
         self.ss = socket.socket()
         self.checked = False
         self.method = "MSG"  # CHANNEL OR MSG
-        self.commands = {
-            "PING": 0,
-            "PONG": 1,
-            "JOIN": 2,
-            "LEAVE": 3,
-            "QUIT": 4,
-            "PRIVMSG": 5,
-        }
         self.online = False
+        self.manager = None
 
     def run(self):  # Overwrite run() method, put what you want the thread do here
-        self.thread_stop = False
         if not self.checked or not self.online:
             return None
+        if not self.manager:
+            return None
+
+        logger = self.manager.app.logger
         last_ping = time()
 
-        matchuser = re.compile(ur'^\:(\S+)\!')
-        while not self.thread_stop:
+        last_buf = ''
+        while 1:
             # 判断是否存活
             pinging = False
             if time()-last_ping > self.timeout:
-                ss.send("PING :TIMEOUTCHECK\r\n")
+                self.ss.send("PING :TIMEOUTCHECK\r\n")
                 pinging = True
             # 获得buffer并分离buffer的每一行
 
-            readbuffer=""
-            readbuffer = self.ss.recv(1024)
-            temp = string.split(readbuffer, "\n")
-            readbuffer = temp.pop()
+            buf = self.ss.recv(1024)
+            lines = (last_buf + buf).split('\r\n')
+            last_buf = '' if buf.endswith('\r\n') else lines.pop()
+
+            # readbuffer = self.ss.recv(1024)
+            # temp = string.split(readbuffer, "\n")
+            # readbuffer = temp.pop()
 
             # 对每一行处理
-            for line in temp:
-                print line
-                line = string.rstrip(line)
-                line = string.split(line)
-                cmdfound = False
-                for i in range(0, len(line)):
-                    if self.commands.has_key(line[i]):
-                        cmdfound = True
-                        break
-                if cmdfound is False:
+            rspace = re.compile(r'\s+')
+            for line in lines:
+                if not line:
                     continue
-                if line[i] == 'PING':
-                    self.ss.send(''.join(["PONG ",line[i+1], '\r\n']))
+
+                if line[0] == ':':
+                    prefix, line = rspace.split(line, 1)
+                    nick = prefix.split('!')[0]
+                else:
+                    nick = None
+
+                cmd, params = rspace.split(line, 1)
+
+                if cmd == 'PING':
+                    self.ss.send("PONG " + params + '\r\n')
                     pinging = False
-                    last_ping = time();
-                elif line[i] == 'PONG':
+                    last_ping = time()
+
+                elif cmd == 'PONG':
                     pinging = False
-                    last_ping = time();
-                elif line[i] == 'JOIN':
-                    if not line[i+1] == self.channel :
-                        online = False
-                elif line[i] == 'PRIVMSG':
-                    match = matchuser.split(line[i-1])
-                    user = match[1]
-                    content = ""
-                    for j in range(i+2,len(line)):
-                        content = ''.join([content,' ', line[j]])
-                    print content
-                    if line[i+1][0] == '#':
-                        if self.method == 'CHANNEL':
-                            if self.shoot(content):
-                                self.ss.send(''.join(["PRIVMSG ", line[i+1], ' ', 'Shoot!','\r\n' ]))
+                    last_ping = time()
+
+                elif cmd == 'JOIN':
+                    logger.info("joined channel %s" % params)
+                    if not params == self.channel:
+                        self.online = False
+
+                elif cmd == 'PRIVMSG':
+                    targets, content = rspace.split(params, 1)
+
+                    if not content[0] == ':':
+                        continue
+
+                    content = content[1:]
+
+                    for target in targets.split(','):
+                        if target[0] == '#':
+                            if self.method == 'CHANNEL':
+                                if self.shoot(content):
+                                    self.ss.send(' '.join([
+                                        "PRIVMSG",
+                                        nick,
+                                        'Shoot!\r\n',
+                                    ]))
+                                else:
+                                    self.ss.send(' '.join([
+                                        "PRIVMSG",
+                                        targets,
+                                        'Server Error\r\n',
+                                    ]))
                             else:
-                                self.ss.send(''.join(["PRIVMSG ", line[i+1], ' ', 'Server Config Error.','\r\n' ]))
-                        else : self.ss.send(''.join(["PRIVMSG ", line[i+1], ' ', 'Please msg me privately','\r\n' ]))
-                    else :
-                        if self.shoot(content):
-                            self.ss.send(''.join(["PRIVMSG ", user, ' ', 'Shoot!','\r\n' ]))
+                                self.ss.send(' '.join([
+                                    'PRIVMSG',
+                                    targets,
+                                    'Please msg me in private\r\n',
+                                ]))
                         else:
-                            self.ss.send(''.join(["PRIVMSG ", user, ' ', 'Server Config Error.','\r\n' ]))
+                            if self.shoot(content):
+                                self.ss.send(' '.join([
+                                    "PRIVMSG",
+                                    nick,
+                                    'Shoot!\r\n',
+                                ]))
+                            else:
+                                self.ss.send(' '.join([
+                                    "PRIVMSG",
+                                    nick,
+                                    'Server Error\r\n',
+                                ]))
+
+                else:
+                    # Other commands
+                    continue
+
             if pinging is True:
                 if(time() - last_ping > (self.timeout + self.pingout)):
-                    print "TimeOut,Stop"
+                    # print "TimeOut,Stop"
                     self.stop()
 
     def shoot(self, content):
@@ -136,7 +168,7 @@ class IRCbot(object):
         if self.HOST is None or self.PORT is None or self.dmch is None:
             return False
 
-        self.ss.connect((self.HOST,self.PORT))
+        self.ss.connect((self.HOST, self.PORT))
         self.ss.send("NICK %s\r\n" % self.NICK)
         self.ss.send("USER %s %s * :%s\r\n" % (self.IDENT, self.HOST, self.REALNAME))
 
@@ -144,7 +176,7 @@ class IRCbot(object):
             self.method = "MSG"
         else:
             self.ss.send("JOIN %s\r\n" % self.channel)
-            self.ss.send("PRIVMSG %s Hello\r\n" % self.channel)
+            # self.ss.send("PRIVMSG %s Hello\r\n" % self.channel)
 
         self.checked = True
         self.online = True
@@ -152,14 +184,14 @@ class IRCbot(object):
 
     def stop(self):
         self.thread_stop = True
-        ss.send("QUIT")
+        self.ss.send("QUIT")
         self.ss.close()
         self.online = False
         self.checked = False
 
 
 def test():
-    thread1 = dmrobot()
+    thread1 = IRCbot()
     thread1.HOST = "card.freenode.net"
     thread1.PORT = 6666
     thread1.channel = "#tuna"

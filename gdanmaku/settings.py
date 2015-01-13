@@ -17,11 +17,14 @@ DB_PATH = os.path.join(FILE_PATH, "db")
 MEDIA_PATH = os.path.join(FILE_PATH, "media")
 
 # DB
-SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(FILE_PATH, "gdanmaku.sqlite")
 REDIS_PREFIX = "gd_"
 
 # WECHAT
 WECHAT_TOKEN = ""
+
+# IRC
+IRC_ENABLED = True
+IRC_SERVER = "card.freenode.net:6666"
 
 try:
     from settings_local import *
