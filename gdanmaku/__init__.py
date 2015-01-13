@@ -7,27 +7,20 @@ from gevent.wsgi import WSGIServer
 from flask import Flask, g
 from . import settings
 from .channel_manager import ChannelManager
-from .irc_robot import IRCManager
 
 bot_list = {}
 app = Flask(__name__)
 app.config.from_object(settings)
 r = redis.StrictRedis(host='localhost', port=6379, db=1)
 chan_mgr = ChannelManager(app, r)
-irc_mgr = IRCManager(app, chan_mgr)
 
 with app.app_context():
     chan_mgr.new_channel("demo", desc=u"演示频道, 发布、订阅均无需密码")
-    # bot_list["demo"] = dmrobot()
-    # bot_list["demo"].HOST = "card.freenode.net"
-    # bot_list["demo"].PORT = 6666
-    # bot_list["demo"].channel = "#tuna"
-    # bot_list["demo"].method = "CHANNEL"
-    # bot_list["demo"].dmch = chan_mgr.get_channel("demo")
-    # if bot_list["demo"].check():
-    #     spawn(bot_list["demo"].run)
 
-irc_mgr.connect_channel("demo", "#tuna")
+if app.config.get("IRC_ENABLED"):
+    from .irc_robot import IRCManager
+    irc_mgr = IRCManager(app, chan_mgr)
+    irc_mgr.connect_channel("demo", "#tuna")
 
 
 @app.before_request

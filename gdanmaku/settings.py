@@ -23,8 +23,8 @@ REDIS_PREFIX = "gd_"
 WECHAT_TOKEN = ""
 
 # IRC
-IRC_ENABLED = True
-IRC_SERVER = "card.freenode.net:6666"
+IRC_ENABLED = False
+IRC_SERVER_DEFAULT = ("card.freenode.net", 6666)
 
 try:
     from settings_local import *
