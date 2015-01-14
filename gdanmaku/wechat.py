@@ -8,6 +8,11 @@ import hashlib
 import time
 
 
+cmd_re_join = re.compile(ur'^[:：]加入(?:\s+)(\S+)(?:\s*)(\S+)?')
+cmd_re_opt = re.compile(ur'^[:：]设置(?:\s+)(\S+)(?:\s*)(\S+)?')
+cmd_re_help = re.compile(ur'^[:：](帮助|help)', re.IGNORECASE)
+
+
 @app.route("/api/wechat", methods=["GET", "POST"])
 def api_wechat_handle():
     if not wechat_verify():
@@ -22,66 +27,10 @@ def api_wechat_handle():
     FromUserName = xml_recv.find("FromUserName").text
     Content = xml_recv.find("Content").text
 
+    if Content[0] in (u':', u'：'):
+        return handle_command(FromUserName, ToUserName, Content)
+
     cm = g.channel_manager
-
-    # 加入频道
-    matchjoin = re.compile(ur'^[:：]加入(?:\s)+(\S+)(?:\s)+(\S+)?')
-    match = matchjoin.split(Content)
-
-    if len(match) > 2:
-        if not (match[1]):
-            return make_reply(
-                FromUserName,
-                ToUserName,
-                u'命令错误哦，回复"帮助"看看使用说明吧')
-
-        channel = cm.get_channel(match[1])
-        if channel is None:
-            return make_reply(FromUserName, ToUserName, u"木有这个频道。。。")
-
-        if channel.is_open:
-            g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), match[1])
-            return make_reply(FromUserName, ToUserName, u"加入成功")
-
-        # 加密频道
-        if match[2] is None or (not channel.verify_pub_passwd(match[2])):
-            return make_reply(FromUserName, ToUserName, u"密码不对。。在试试？")
-
-        g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), match[1])
-        g.r.set(''.join(['wechat.', FromUserName, '.ch_key']), match[2])
-        return make_reply(FromUserName, ToUserName, u"设置通道成功，发射吧")
-
-    # 设置弹幕属性
-    matchsetting = re.compile(ur"^[:：]设置(?:\s)*(\S+)(?:\s)*(\S+)?")
-    match = matchsetting.split(Content)
-    if len(match) > 2:
-        position, color = option_trans(match[1], match[2])
-        if position is None:
-            return make_reply(
-                FromUserName, ToUserName, u"命令错误哦，回复帮助看看使用说明吧")
-
-        g.r.set(''.join(['wechat.', FromUserName, '.ch_pos']), position)
-        if color is not None:
-            g.r.set(''.join(['wechat.', FromUserName, '.ch_color']), color)
-
-        return make_reply(FromUserName, ToUserName, u"设置成功，发射吧！")
-
-    # 帮助
-    matchhelp = re.compile(ur"^[:：][帮助|help]", re.IGNORECASE)
-    match = matchhelp.match(Content)
-    if match:
-        return make_reply(
-            FromUserName,
-            ToUserName,
-            (u"来发射弹幕吧！\n"
-             u"回复 \":加入 频道名称 [发射密码]\" 加入频道\n"
-             u"如\":加入 sheyifa 123456\"\n"
-             u"加入开放频道则密码留空\n"
-             u"回复 \":设置 位置 [颜色]\" 设置弹幕属性\n"
-             u"如 \":设置 顶部 白\" \n"
-             u"可选的位置有：飞过 顶部 底部\n"
-             u"可选的颜色有：蓝 白 红 黄 青 绿 紫 黑")
-        )
 
     ch_name = g.r.get(''.join(['wechat.', FromUserName, '.ch_name']))
     ch_key = g.r.get(''.join(['wechat.', FromUserName, '.ch_key']))
@@ -103,12 +52,77 @@ def api_wechat_handle():
 
     danmaku = {
         "text": Content,
-        "style": ch_color or 'fly',
-        "position": ch_pos or 'blue',
+        "style": ch_color or 'blue',
+        "position": ch_pos or 'fly',
     }
     channel.new_danmaku(danmaku)
 
     return make_reply(FromUserName, ToUserName, u"发射成功！")
+
+
+def handle_command(FromUserName, ToUserName, Content):
+    cm = g.channel_manager
+
+    # 加入频道
+    match = cmd_re_join.match(Content)
+    if match:
+        mchan, mpass = match.groups()
+        if not mchan:
+            return make_reply(
+                FromUserName,
+                ToUserName,
+                u'命令错误哦，回复"帮助"看看使用说明吧')
+
+        channel = cm.get_channel(mchan)
+        if channel is None:
+            return make_reply(FromUserName, ToUserName, u"木有这个频道。。。")
+
+        if channel.is_open:
+            g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), mchan)
+            return make_reply(FromUserName, ToUserName, u"加入成功")
+
+        # 加密频道
+        if match[2] is None or (not channel.verify_pub_passwd(mpass)):
+            return make_reply(FromUserName, ToUserName, u"密码不对。。在试试？")
+
+        g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), mchan)
+        g.r.set(''.join(['wechat.', FromUserName, '.ch_key']), mpass)
+        return make_reply(FromUserName, ToUserName, u"设置通道成功，发射吧")
+
+    # 设置弹幕属性
+    match = cmd_re_opt.match(Content)
+    if match:
+        position, color = option_trans(*match.groups())
+        if position is None:
+            return make_reply(
+                FromUserName,
+                ToUserName,
+                u"命令错误哦，回复\":帮助\"看看使用说明吧")
+
+        g.r.set(''.join(['wechat.', FromUserName, '.ch_pos']), position)
+        if color is not None:
+            g.r.set(''.join(['wechat.', FromUserName, '.ch_color']), color)
+
+        return make_reply(FromUserName, ToUserName, u"设置成功，发射吧！")
+
+    # 帮助
+    match = cmd_re_help.match(Content)
+    if match:
+        return make_reply(
+            FromUserName,
+            ToUserName,
+            (u"来发射弹幕吧！\n"
+             u"回复 \":加入 频道名称 [发射密码]\" 加入频道\n"
+             u"如\":加入 sheyifa 123456\"\n"
+             u"加入开放频道则密码留空\n"
+             u"回复 \":设置 位置 [颜色]\" 设置弹幕属性\n"
+             u"如 \":设置 顶部 白\" \n"
+             u"可选的位置有：飞过 顶部 底部\n"
+             u"可选的颜色有：蓝 白 红 黄 青 绿 紫 黑")
+        )
+
+    return make_reply(
+        FromUserName, ToUserName, u"命令错误哦，回复\":帮助\"看看使用说明吧")
 
 
 def wechat_verify():
