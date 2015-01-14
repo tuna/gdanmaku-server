@@ -13,6 +13,10 @@ cmd_re_opt = re.compile(ur'^[:：]设置(?:\s+)(\S+)(?:\s*)(\S+)?')
 cmd_re_help = re.compile(ur'^[:：](帮助|help)', re.IGNORECASE)
 
 
+def redis_key(key):
+    return current_app.config.get("REDIS_PREFIX") + "wechat." + key
+
+
 @app.route("/api/wechat", methods=["GET", "POST"])
 def api_wechat_handle():
     if not wechat_verify():
@@ -32,18 +36,19 @@ def api_wechat_handle():
 
     cm = g.channel_manager
 
-    ch_name = g.r.get(''.join(['wechat.', FromUserName, '.ch_name']))
-    ch_key = g.r.get(''.join(['wechat.', FromUserName, '.ch_key']))
-    ch_pos = g.r.get(''.join(['wechat.', FromUserName, '.ch_pos']))
-    ch_color = g.r.get(''.join(['wechat.', FromUserName, '.ch_color']))
+    ch_name = g.r.get(redis_key(FromUserName + ".ch_name"))
+    ch_key = g.r.get(redis_key(FromUserName + ".ch_key")) or ''
+    ch_pos = g.r.get(redis_key(FromUserName + ".ch_pos"))
+    ch_color = g.r.get(redis_key(FromUserName + ".ch_color"))
 
     if ch_name is None:
         return make_reply(
-            FromUserName, ToUserName, u"还没有加入频道或者超时了 T_T")
+            FromUserName,
+            ToUserName,
+            u"还没有加入频道或者超时，回复\":帮助\"获取帮助。"
+        )
 
     channel = cm.get_channel(ch_name)
-    if ch_key is None:
-        ch_key = ''
     if channel is None:
         return make_reply(FromUserName, ToUserName, u"频道已經关闭了 T_T")
 
@@ -78,15 +83,16 @@ def handle_command(FromUserName, ToUserName, Content):
             return make_reply(FromUserName, ToUserName, u"木有这个频道。。。")
 
         if channel.is_open:
-            g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), mchan)
+            g.r.set(redis_key(FromUserName + '.ch_name'), mchan)
             return make_reply(FromUserName, ToUserName, u"加入成功")
 
         # 加密频道
         if match[2] is None or (not channel.verify_pub_passwd(mpass)):
             return make_reply(FromUserName, ToUserName, u"密码不对。。在试试？")
 
-        g.r.set(''.join(['wechat.', FromUserName, '.ch_name']), mchan)
-        g.r.set(''.join(['wechat.', FromUserName, '.ch_key']), mpass)
+        g.r.set(redis_key(FromUserName + '.ch_name'), mchan)
+        g.r.set(redis_key(FromUserName + '.ch_key'), mpass)
+
         return make_reply(FromUserName, ToUserName, u"设置通道成功，发射吧")
 
     # 设置弹幕属性
@@ -99,9 +105,9 @@ def handle_command(FromUserName, ToUserName, Content):
                 ToUserName,
                 u"命令错误哦，回复\":帮助\"看看使用说明吧")
 
-        g.r.set(''.join(['wechat.', FromUserName, '.ch_pos']), position)
+        g.r.set(redis_key(FromUserName + '.ch_pos'), position)
         if color is not None:
-            g.r.set(''.join(['wechat.', FromUserName, '.ch_color']), color)
+            g.r.set(redis_key(FromUserName + '.ch_color'), color)
 
         return make_reply(FromUserName, ToUserName, u"设置成功，发射吧！")
 
@@ -168,11 +174,29 @@ def option_trans(position, color):
         u'绿': 'green',
         u'紫': 'purple',
         u'黑': 'black',
+        u'蓝色': 'blue',
+        u'白色': 'white',
+        u'红色': 'red',
+        u'黄色': 'yellow',
+        u'青色': 'cyan',
+        u'绿色': 'green',
+        u'紫色': 'purple',
+        u'黑色': 'black',
     }
 
-    positions = {u'飞过': 'fly', u'顶部': 'top', u'底部': 'buttom'}
+    positions = {
+        u'飞过': 'fly',
+        u'顶部': 'top',
+        u'底部': 'buttom',
+        u'飞': 'fly',
+        u'顶': 'top',
+        u'底': 'buttom',
+    }
 
     ret = [positions.get(position, None), colors.get(color, None)]
     return ret
+
+
+__all__ = ['api_wechat_handle', ]
 
 # vim: ts=4 sw=4 sts=4 expandtab

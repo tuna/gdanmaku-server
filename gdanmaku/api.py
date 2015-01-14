@@ -105,4 +105,7 @@ def api_channel_danmaku_1(cname):
     return jsonResponse(r)
 
 
+__all__ = ['api_channel_danmaku', 'api_channel_danmaku_1', 'api_channel_page',
+           'api_create_channel', 'api_list_channels', 'api_post_danmaku']
+
 # vim: ts=4 sw=4 sts=4 expandtab
