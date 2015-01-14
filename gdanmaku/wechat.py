@@ -79,19 +79,28 @@ def handle_command(FromUserName, ToUserName, Content):
                 u'命令错误哦，回复"帮助"看看使用说明吧')
 
         channel = cm.get_channel(mchan)
+        ttl = g.r.ttl(channel.key)
         if channel is None:
             return make_reply(FromUserName, ToUserName, u"木有这个频道。。。")
 
         if channel.is_open:
-            g.r.set(redis_key(FromUserName + '.ch_name'), mchan)
+            ckey = redis_key(FromUserName + '.ch_name')
+            g.r.set(ckey, mchan)
+            if ttl > 0:
+                g.r.expire(ckey, ttl)
             return make_reply(FromUserName, ToUserName, u"加入成功")
 
         # 加密频道
-        if match[2] is None or (not channel.verify_pub_passwd(mpass)):
+        if mpass is None or (not channel.verify_pub_passwd(mpass)):
             return make_reply(FromUserName, ToUserName, u"密码不对。。在试试？")
 
-        g.r.set(redis_key(FromUserName + '.ch_name'), mchan)
-        g.r.set(redis_key(FromUserName + '.ch_key'), mpass)
+        ckey = redis_key(FromUserName + '.ch_name')
+        pkey = redis_key(FromUserName + '.ch_key')
+        g.r.set(ckey, mchan)
+        g.r.set(pkey, mpass)
+        if ttl > 0:
+            g.r.expire(ckey, ttl)
+            g.r.expire(pkey, ttl)
 
         return make_reply(FromUserName, ToUserName, u"设置通道成功，发射吧")
 
