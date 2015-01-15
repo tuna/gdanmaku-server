@@ -18,7 +18,7 @@ with app.app_context():
     chan_mgr.new_channel("demo", desc=u"演示频道, 发布、订阅均无需密码")
 
 if app.config.get("IRC_ENABLED"):
-    from .irc_robot import IRCManager
+    from .irc_manager import IRCManager
     irc_mgr = IRCManager(app, chan_mgr)
     irc_mgr.connect_channel("demo", "#tuna")
 

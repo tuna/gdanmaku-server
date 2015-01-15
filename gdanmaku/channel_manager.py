@@ -71,15 +71,22 @@ class Channel(object):
 
         name = dchan['name']
         desc = dchan.get('desc', 'Test')
-        ttl = dchan.get('_ttl', -1)
         sub_passwd = dchan.get('sub_passwd', "")
         pub_passwd = dchan.get('pub_passwd', None)
-        c = Channel(name, desc, ttl)
+        c = Channel(name, desc, ttl=None)
         c.sub_passwd = sub_passwd
         c.pub_passwd = pub_passwd
         c.m = manager
         c.r = manager.r
         return c
+
+    def ttl(self):
+        if self._ttl is None:
+            return self.r.ttl(self.key)
+        elif self._ttl < 0:
+            return self._ttl
+        else:
+            return self._ttl * 60 * 60
 
     def to_dict(self, public=False):
         if public:
