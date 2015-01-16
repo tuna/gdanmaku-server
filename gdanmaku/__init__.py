@@ -13,8 +13,10 @@ app = Flask(__name__)
 app.config.from_object(settings)
 r = redis.StrictRedis(host='localhost', port=6379, db=1)
 chan_mgr = ChannelManager(app, r)
+
 with app.app_context():
-    chan_mgr.new_channel("demo", desc=u"演示频道, 发布、订阅均无需密码")
+    for kwargs in app.config.get("PERSISTENT_CHANNELS", []):
+        chan_mgr.new_channel(**kwargs)
 
 
 @app.before_request

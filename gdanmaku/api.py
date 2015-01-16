@@ -6,7 +6,13 @@ from . import app
 
 
 def jsonResponse(r):
-    return Response(json.dumps(r), mimetype='application/json')
+    res = Response(json.dumps(r), mimetype='application/json')
+    res.headers.add('Access-Control-Allow-Origin', '*')
+    res.headers.add(
+        'Access-Control-Allow-Headers',
+        'Content-Type,X-GDANMAKU-AUTH-KEY,X-GDANMAKU-SUBSCRIBER-ID')
+    res.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    return res
 
 
 @app.route("/api/v1/channels", methods=["GET"])
@@ -41,6 +47,12 @@ def api_channel_page(cname):
     pass
 
 
+@app.route("/api/v1/channels/<cname>/danmaku", methods=["OPTIONS"])
+@app.route("/api/v1.1/channels/<cname>/danmaku", methods=["OPTIONS"])
+def api_channel_options(cname):
+    return jsonResponse({"status": "OK"})
+
+
 @app.route("/api/v1/channels/<cname>/danmaku", methods=["POST"])
 def api_post_danmaku(cname):
     cm = g.channel_manager
@@ -57,19 +69,19 @@ def api_post_danmaku(cname):
     if request.json:
         danmaku = {
             "text": request.json["content"],
-            "style": request.json.get("color", "white"),
+            "style": request.json.get("color", "blue"),
             "position": request.json.get("position", "fly")
         }
     else:
         danmaku = {
             "text": request.form["content"],
-            "style": request.form.get("style", "white"),
+            "style": request.form.get("style", "blue"),
             "position": request.form.get("position", "fly")
         }
 
     # interface.new_danmaku(content)
     channel.new_danmaku(danmaku)
-    return "OK"
+    return jsonResponse({"ret": "OK"})
 
 
 @app.route("/api/v1/channels/<cname>/danmaku", methods=["GET"])
@@ -97,8 +109,8 @@ def api_channel_danmaku_1(cname):
         return "Not Found", 404
 
     sname = request.headers.get("X-GDANMAKU-SUBSCRIBER-ID", "ALL")
-    key = request.headers.get("X-GDANMAKU-AUTH-KEY")
-    if key is None or (not channel.verify_sub_passwd(key)):
+    key = request.headers.get("X-GDANMAKU-AUTH-KEY", "")
+    if not channel.verify_sub_passwd(key):
         return "Forbidden", 403
 
     r = channel.pop_danmakus(sname)
@@ -106,6 +118,7 @@ def api_channel_danmaku_1(cname):
 
 
 __all__ = ['api_channel_danmaku', 'api_channel_danmaku_1', 'api_channel_page',
-           'api_create_channel', 'api_list_channels', 'api_post_danmaku']
+           'api_create_channel', 'api_list_channels', 'api_post_danmaku',
+           'api_channel_options']
 
 # vim: ts=4 sw=4 sts=4 expandtab

@@ -17,11 +17,14 @@ DB_PATH = os.path.join(FILE_PATH, "db")
 MEDIA_PATH = os.path.join(FILE_PATH, "media")
 
 # DB
-SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(FILE_PATH, "gdanmaku.sqlite")
 REDIS_PREFIX = "gd_"
 
 # WECHAT
 WECHAT_TOKEN = ""
+
+PERSISTENT_CHANNELS = [
+    {'name': 'demo', 'desc': u"演示频道, 发布、订阅均无需密码"},
+]
 
 try:
     from settings_local import *
