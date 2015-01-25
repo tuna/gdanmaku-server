@@ -196,10 +196,10 @@ def option_trans(position, color):
     positions = {
         u'飞过': 'fly',
         u'顶部': 'top',
-        u'底部': 'buttom',
+        u'底部': 'bottom',
         u'飞': 'fly',
         u'顶': 'top',
-        u'底': 'buttom',
+        u'底': 'bottom',
     }
 
     ret = [positions.get(position, None), colors.get(color, None)]

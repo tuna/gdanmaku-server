@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
 import json
-import redis
+import binascii
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app, g
 
@@ -38,6 +39,36 @@ class Subscriber(object):
             + cls.SUBSCRIBER_PREFIX + cname + "_buffer_" + sub_id
 
 
+class Token(object):
+
+    TOKEN_PREFIX = "token_"
+
+    @classmethod
+    def new(cls, chan, rate=0):
+        token = binascii.hexlify(os.urandom(8))
+        key = cls.TOKEN_PREFIX + token
+        val = {'c': chan.name, 'r': rate}
+        ttl = chan.ttl()
+        if ttl < 0:
+            ttl = 3600
+        g.r.setex(key, ttl, json.dumps(val))
+        return token
+
+    @classmethod
+    def verify(cls, chan, token):
+        key = cls.TOKEN_PREFIX + token
+        jv, _ = (g.r.pipeline()
+                 .get(key)
+                 .delete(key)
+                 .execute())
+
+        if jv is None:
+            return False
+
+        val = json.loads(jv)
+        return val['c'] == chan.name
+
+
 class Channel(object):
 
     CHANNEL_PREFIX = "chan_"
@@ -72,10 +103,18 @@ class Channel(object):
         desc = dchan.get('desc', 'Test')
         sub_passwd = dchan.get('sub_passwd', "")
         pub_passwd = dchan.get('pub_passwd', None)
-        c = Channel(name, desc)
+        c = Channel(name, desc, ttl=None)
         c.sub_passwd = sub_passwd
         c.pub_passwd = pub_passwd
         return c
+
+    def ttl(self):
+        if self._ttl is None:
+            return g.r.ttl(self.key)
+        elif self._ttl < 0:
+            return self._ttl
+        else:
+            return self._ttl * 60 * 60
 
     def to_dict(self, public=False):
         if public:
@@ -105,6 +144,13 @@ class Channel(object):
         if self.pub_passwd is None:
             return True
         return check_password_hash(self.pub_passwd, password)
+
+    def gen_web_token(self):
+        return Token.new(self)
+
+    def verify_token(self, token):
+        # TODO: rate limited tokens
+        return Token.verify(self, token)
 
     def new_danmaku(self, danmaku):
         for st, c in self.subscribers:

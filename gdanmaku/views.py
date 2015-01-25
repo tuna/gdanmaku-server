@@ -17,10 +17,11 @@ def channel_view(cname):
     cm = g.channel_manager
 
     channel = cm.get_channel(cname)
+    token = channel.gen_web_token()
     if channel is None:
         return "Not Found", 404
 
-    return render_template("channel.html", channel=channel)
+    return render_template("channel.html", channel=channel, token=token)
 
 
 @app.route("/", methods=["GET"])

@@ -3,6 +3,7 @@
 import json
 from flask import request, g, Response
 from . import app
+from .shared import RE_INVALID, DM_COLORS, DM_POSITIONS
 
 
 def jsonResponse(r):
@@ -56,6 +57,7 @@ def api_channel_options(cname):
 @app.route("/api/v1/channels/<cname>/danmaku", methods=["POST"])
 def api_post_danmaku(cname):
     cm = g.channel_manager
+    form = request.json if request.json else request.form
 
     channel = cm.get_channel(cname)
     if channel is None:
@@ -66,42 +68,54 @@ def api_post_danmaku(cname):
         if key is None or (not channel.verify_pub_passwd(key)):
             return "Forbidden", 403
 
-    if request.json:
-        danmaku = {
-            "text": request.json["content"],
-            "style": request.json.get("color", "blue"),
-            "position": request.json.get("position", "fly")
-        }
-    else:
-        danmaku = {
-            "text": request.form["content"],
-            "style": request.form.get("style", "blue"),
-            "position": request.form.get("position", "fly")
-        }
+    _token = request.headers.get("X-GDANMAKU-TOKEN")
+    if _token is None:
+        return "Forbidden", 403
 
-    # interface.new_danmaku(content)
+    try:
+        ttype, token = _token.split(':')
+    except ValueError:
+        return "Bad Request", 400
+
+    res = {}
+    if ttype == "WEB":
+        if not channel.verify_token(token):
+            return "Forbidden", 403
+        res['token'] = channel.gen_web_token()
+    elif ttype == "APP":
+        # TODO: Implement
+        pass
+    else:
+        return "Bad Request", 400
+
+    try:
+        content = form['content']
+    except KeyError:
+        return "Bad Request", 400
+    if RE_INVALID.search(content) or len(content.strip()) > 128:
+        return "Bad Request", 400
+
+    style = form.get("color", "blue")
+    if style not in DM_COLORS:
+        style = "blue"
+    position = form.get("position", "fly")
+    if position not in DM_POSITIONS:
+        position = "fly"
+
+    danmaku = {
+        "text": content,
+        "style": style,
+        "position": position
+    }
+    res['ret'] = "OK"
+
     channel.new_danmaku(danmaku)
-    return jsonResponse({"ret": "OK"})
+    return jsonResponse(res)
 
 
 @app.route("/api/v1/channels/<cname>/danmaku", methods=["GET"])
-def api_channel_danmaku(cname):
-    cm = g.channel_manager
-
-    channel = cm.get_channel(cname)
-    if channel is None:
-        return "Not Found", 404
-
-    key = request.headers.get("X-GDANMAKU-AUTH-KEY")
-    if key is None or (not channel.verify_sub_passwd(key)):
-        return "Forbidden", 403
-
-    r = channel.pop_danmakus("ALL")
-    return jsonResponse(r)
-
-
 @app.route("/api/v1.1/channels/<cname>/danmaku", methods=["GET"])
-def api_channel_danmaku_1(cname):
+def api_channel_danmaku(cname):
     cm = g.channel_manager
 
     channel = cm.get_channel(cname)
@@ -117,8 +131,8 @@ def api_channel_danmaku_1(cname):
     return jsonResponse(r)
 
 
-__all__ = ['api_channel_danmaku', 'api_channel_danmaku_1', 'api_channel_page',
-           'api_create_channel', 'api_list_channels', 'api_post_danmaku',
-           'api_channel_options']
+__all__ = ['api_channel_danmaku', 'api_channel_page',
+           'api_create_channel', 'api_list_channels', 'api_post_danmaku']
+
 
 # vim: ts=4 sw=4 sts=4 expandtab

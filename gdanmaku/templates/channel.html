@@ -10,12 +10,13 @@
       <div class="form-group">
         <label class="sr-only" for="pub_passwd">频道密码: </label>
         <input type="password" class="form-control" id="pub_password" placeholder="频道密码">
-        <div class="btn btn-success" id="set-password">设置密码</div>
+        <div class="btn btn-success" id="set-password">保存密码</div>
       </div>
     </form>
     {% endif %}
     <div id="error_container">
     </div>
+    <div id="token">{{token}}</div>
     <form id="post-danmaku" action="{{ url_for('api_post_danmaku', cname=channel.name) }}" method="post" role="form">
 
       <div class="form-group" id="position-selection">
@@ -87,7 +88,9 @@
 <script type="text/javascript">
 
 $(document).ready(function() {
-  var pub_passwd = "";
+  var pub_passwd = "", token=$("#token").text();
+  $('#token').remove();
+  console.log(token);
 
   if($("#set-password").length > 0) {
     $("#set-password").click(function() {
@@ -113,17 +116,22 @@ $(document).ready(function() {
     console.log(pub_passwd);
     $.ajax({
       type: "POST",
+      dataType: "json",
       headers: {
         "Content-Type": "application/json",
-        "X-GDANMAKU-AUTH-KEY": pub_passwd
+        "X-GDANMAKU-AUTH-KEY": pub_passwd,
+        "X-GDANMAKU-TOKEN": "WEB:" + token
       },
       url: $('#post-danmaku').attr("action"),
       data: data,
-      success: function(){ $("#danmaku").val(""); },
+      success: function(data){ 
+        $("#danmaku").val(""); 
+        token = data.token;
+      },
       statusCode: {
         403: function() {
           show_error("密码有误，请刷新重设！");
-        } 
+        }
       }
     });
 
