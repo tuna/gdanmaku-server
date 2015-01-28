@@ -24,7 +24,7 @@ DM_COLOR_TRANS = {
     u'紫色': 'purple',
     u'黑色': 'black',
 }
-DM_POSITIONS = {'fly', 'top', 'buttom'}
-DM_POSITION_TRANS = {u'飞过': 'fly', u'顶部': 'top', u'底部': 'buttom'}
+DM_POSITIONS = {'fly', 'top', 'bottom'}
+DM_POSITION_TRANS = {u'飞过': 'fly', u'顶部': 'top', u'底部': 'bottom'}
 
 # vim: ts=4 sw=4 sts=4 expandtab
