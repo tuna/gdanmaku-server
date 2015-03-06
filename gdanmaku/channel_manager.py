@@ -121,6 +121,7 @@ class Channel(object):
             return {
                 'name': self.name,
                 'desc': self.desc,
+                'is_open': self.is_open,
             }
         else:
             return {
