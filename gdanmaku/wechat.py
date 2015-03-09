@@ -13,6 +13,16 @@ cmd_re_join = re.compile(r'^[:：]加入(?:\s+)(\S+)(?:\s*)(\S+)?')
 cmd_re_opt = re.compile(r'^[:：]设置(?:\s+)(\S+)(?:\s*)(\S+)?')
 cmd_re_help = re.compile(r'^[:：](帮助|help)', re.IGNORECASE)
 
+HELP_MSG = (
+    "来发射弹幕吧！\n"
+    "回复 \":加入 频道名称 [发射密码]\" 加入频道\n"
+    "如\":加入 sheyifa 123456\"\n"
+    "加入开放频道则密码留空\n"
+    "回复 \":设置 位置 [颜色]\" 设置弹幕属性\n"
+    "如 \":设置 顶部 白\" \n"
+    "可选的位置有：飞过 顶部 底部\n"
+    "可选的颜色有：蓝 白 红 黄 青 绿 紫 黑")
+
 
 def redis_key(key):
     return current_app.config.get("REDIS_PREFIX") + "wechat." + key
@@ -30,6 +40,13 @@ def api_wechat_handle():
     xml_recv = ET.fromstring(request.data)
     ToUserName = xml_recv.find("ToUserName").text
     FromUserName = xml_recv.find("FromUserName").text
+
+    if xml_recv.find("MsgType").text == "event":
+        event = xml_recv.find("Event").text
+        event_key = xml_recv.find("EventKey")
+        event_key = event_key.text if event_key is not None else ""
+        return handle_event(FromUserName, ToUserName, event, event_key)
+
     Content = xml_recv.find("Content").text
 
     if Content[0] in (u':', u'：'):
@@ -62,6 +79,18 @@ def api_wechat_handle():
         "position": ch_pos or 'fly',
     }
     channel.new_danmaku(danmaku)
+
+    return "success"
+
+
+def handle_event(FromUserName, ToUserName, Event, EventKey=""):
+    if Event.lower() == "subscribe" and not EventKey:
+        return make_reply(FromUserName, ToUserName, HELP_MSG)
+    elif Event.lower() == "unsubscribe":
+        g.r.delete(
+            redis_key(FromUserName + '.ch_pos'),
+            redis_key(FromUserName + '.ch_color')
+        )
 
     return "success"
 
@@ -127,14 +156,7 @@ def handle_command(FromUserName, ToUserName, Content):
         return make_reply(
             FromUserName,
             ToUserName,
-            ("来发射弹幕吧！\n"
-             "回复 \":加入 频道名称 [发射密码]\" 加入频道\n"
-             "如\":加入 sheyifa 123456\"\n"
-             "加入开放频道则密码留空\n"
-             "回复 \":设置 位置 [颜色]\" 设置弹幕属性\n"
-             "如 \":设置 顶部 白\" \n"
-             "可选的位置有：飞过 顶部 底部\n"
-             "可选的颜色有：蓝 白 红 黄 青 绿 紫 黑")
+            HELP_MSG,
         )
 
     return make_reply(
