@@ -201,7 +201,6 @@ class Channel(object):
 
     def new_danmaku_exam(self, danmaku):
         bname = self.prefix() + self.name + "_exam"
-        print(danmaku)
         g.r.rpush(bname, json.dumps(danmaku))
         g.r.expire(bname, self.ttl())
 
