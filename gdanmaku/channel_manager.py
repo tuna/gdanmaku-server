@@ -77,13 +77,16 @@ class Channel(object):
     def prefix(cls):
         return current_app.config.get("REDIS_PREFIX") + cls.CHANNEL_PREFIX
 
-    def __init__(self, name, desc="Test", ttl=-1, sub_passwd="", pub_passwd=None):
+    def __init__(self, name, desc="Test", ttl=-1, sub_passwd="",
+                 pub_passwd=None, exam_passwd=None):
         self.name = name
         self.desc = desc
         self._ttl = ttl
         self.sub_passwd = generate_password_hash(sub_passwd)
         self.pub_passwd = generate_password_hash(pub_passwd) \
             if pub_passwd else None
+        self.exam_passwd = generate_password_hash(exam_passwd) \
+            if exam_passwd else None
 
     @property
     def key(self):
@@ -103,9 +106,11 @@ class Channel(object):
         desc = dchan.get('desc', 'Test')
         sub_passwd = dchan.get('sub_passwd', "")
         pub_passwd = dchan.get('pub_passwd', None)
+        exam_passwd = dchan.get('exam_passwd', None)
         c = Channel(name, desc, ttl=None)
         c.sub_passwd = sub_passwd
         c.pub_passwd = pub_passwd
+        c.exam_passwd = exam_passwd
         return c
 
     def ttl(self):
@@ -122,6 +127,7 @@ class Channel(object):
                 'name': self.name,
                 'desc': self.desc,
                 'is_open': self.is_open,
+                'need_exam': self.need_exam,
             }
         else:
             return {
@@ -129,6 +135,7 @@ class Channel(object):
                 'desc': self.desc,
                 'sub_passwd': self.sub_passwd,
                 'pub_passwd': self.pub_passwd,
+                'exam_passwd': self.exam_passwd,
             }
 
     def to_json(self):
@@ -138,6 +145,10 @@ class Channel(object):
     def is_open(self):
         return self.pub_passwd is None
 
+    @property
+    def need_exam(self):
+        return self.exam_passwd is not None
+
     def verify_sub_passwd(self, password):
         return check_password_hash(self.sub_passwd, password)
 
@@ -145,6 +156,11 @@ class Channel(object):
         if self.pub_passwd is None:
             return True
         return check_password_hash(self.pub_passwd, password)
+
+    def verify_exam_passwd(self, password):
+        if self.exam_passwd is None:
+            return True
+        return check_password_hash(self.exam_passwd, password)
 
     def gen_web_token(self):
         return Token.new(self)
@@ -183,12 +199,25 @@ class Channel(object):
         _, msg = ret
         return [json.loads(msg), ]
 
-        # try:
-        #     _, msg = g.r.blpop(bname, timeout=5)
-        # except redis.TimeoutError:
-        #     return []
-        # else:
-        #     return [json.loads(msg), ]
+    def new_danmaku_exam(self, danmaku):
+        bname = self.prefix() + self.name + "_exam"
+        print(danmaku)
+        g.r.rpush(bname, json.dumps(danmaku))
+        g.r.expire(bname, self.ttl())
+
+    def pop_exam_danmakus(self):
+        bname = self.prefix() + self.name + "_exam"
+        if g.r.exists(bname):
+            msg = g.r.lrange(bname, 0, -1)
+            g.r.delete(bname)
+            return map(lambda x: json.loads(x), msg)
+
+        ret = g.r.blpop(bname, timeout=5)
+        if ret is None:
+            return []
+
+        _, msg = ret
+        return [json.loads(msg), ]
 
 
 class ChannelManager(object):
@@ -211,6 +240,7 @@ class ChannelManager(object):
         self.r.set(key, channel.to_json())
         if channel._ttl > 0:
             self.r.expire(key, channel._ttl * 60 * 60)
+
         return True
 
     def get_channel(self, name):

@@ -32,7 +32,8 @@ def api_create_channel():
             "desc": form["desc"],
             "ttl": int(form.get("ttl", 2)),
             "sub_passwd": form["sub_passwd"],
-            "pub_passwd": form.get("pub_passwd", ""),
+            "pub_passwd": form.get("pub_passwd", None),
+            "exam_passwd": form.get("exam_passwd", None),
         }
     except:
         return "Invalid Request", 400
@@ -92,7 +93,7 @@ def api_post_danmaku(cname):
         content = form['content']
     except KeyError:
         return "Bad Request", 400
-    if RE_INVALID.search(content) or len(content.strip()) > 128:
+    if RE_INVALID.search(content) or (1 > len(content.strip()) > 128):
         return "Bad Request", 400
 
     style = form.get("color", "blue")
@@ -107,9 +108,22 @@ def api_post_danmaku(cname):
         "style": style,
         "position": position
     }
-    res['ret'] = "OK"
 
-    channel.new_danmaku(danmaku)
+    if not channel.need_exam:
+        channel.new_danmaku(danmaku)
+    else:
+        exam_key = request.headers.get("X-GDANMAKU-EXAM-KEY", None)
+        if exam_key is None:
+            # Normal User, push danmaku to exam queue
+            channel.new_danmaku_exam(danmaku)
+        else:
+            if not channel.verify_exam_passwd(exam_key):
+                return "Bad Exam Password", 403
+            else:
+                # pass
+                channel.new_danmaku(danmaku)
+
+    res['ret'] = "OK"
     return jsonResponse(res)
 
 
@@ -131,8 +145,25 @@ def api_channel_danmaku(cname):
     return jsonResponse(r)
 
 
+@app.route("/api/v1/channels/<cname>/danmaku/exam", methods=["GET"])
+def api_danmaku_to_exam(cname):
+    cm = g.channel_manager
+
+    channel = cm.get_channel(cname)
+    if channel is None:
+        return "Not Found", 404
+
+    key = request.headers.get("X-GDANMAKU-AUTH-KEY", "")
+    if not channel.verify_exam_passwd(key):
+        return "Forbidden", 403
+
+    r = channel.pop_exam_danmakus()
+    return jsonResponse(r)
+
+
 __all__ = ['api_channel_danmaku', 'api_channel_page',
-           'api_create_channel', 'api_list_channels', 'api_post_danmaku']
+           'api_create_channel', 'api_list_channels',
+           'api_post_danmaku', 'api_danmaku_to_exam']
 
 
 # vim: ts=4 sw=4 sts=4 expandtab

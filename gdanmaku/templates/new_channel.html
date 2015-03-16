@@ -12,7 +12,7 @@
         <p><strong>说明:</strong></p>
         <ul>
           <li>频道名称仅有字母、数字、下划线、横线组成, 且以字母开头</li>
-          <li>播放密码必填，发布密码选填</li>
+          <li>播放密码必填，发布、审核密码选填</li>
         </ul>
       </div>
       <form class="form-horizontal" role="form">
@@ -37,7 +37,13 @@
         <div class="form-group">
           <label for="pub_passwd" class="col-sm-2 control-label">发布密码</label>
           <div class="col-sm-10">
-            <input autocomplete="off" type="password" class="form-control" id="pub_passwd" name="pub_passwd" placeholder="发射弹幕所需密码">
+            <input autocomplete="off" type="password" class="form-control" id="pub_passwd" name="pub_passwd" placeholder="发射弹幕所需密码(选填)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="pub_passwd" class="col-sm-2 control-label">审核密码</label>
+          <div class="col-sm-10">
+            <input autocomplete="off" type="password" class="form-control" id="exam_passwd" name="exam_passwd" placeholder="若需要审核弹幕，请填写审核密码(选填)">
           </div>
         </div>
         <div class="form-group">
@@ -123,7 +129,8 @@ $(document).ready(function() {
         "desc": $("#desc").val(),
         "ttl": $("form input[name=ttl]:checked").val(),
         "sub_passwd": $("#sub_passwd").val(),
-        "pub_passwd": $("#pub_passwd").val()
+        "pub_passwd": $("#pub_passwd").val(),
+        "exam_passwd": $("#exam_passwd").val()
       }),
       success: function(data) {
         document.location.href = data.url; 
