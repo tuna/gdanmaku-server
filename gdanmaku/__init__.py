@@ -33,6 +33,7 @@ from . import views
 from . import api
 from . import wechat
 
+
 def main():
     app.debug = True
     http_server = WSGIServer(('', 5000), app)

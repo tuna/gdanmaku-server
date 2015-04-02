@@ -226,9 +226,18 @@ class ChannelManager(object):
         self.r = r   # redis client
 
     def channels(self, instance=False):
+        def _chan_generator(keys, inst):
+            C = (lambda x: Channel.from_json(x)) if inst else (lambda x: x)
+            for k in keys:
+                try:
+                    v = self.r.get(k)
+                except:
+                    self.r.delete(k)
+                else:
+                    yield C(v)
+
         keys = self.r.keys(Channel.prefix()+"*")
-        return [Channel.from_json(self.r.get(k)) for k in keys] \
-            if instance else [self.r.get(k) for k in keys]
+        return list(_chan_generator(keys, instance))
 
     def new_channel(self, name, **kwargs):
         key = Channel.prefix() + name
