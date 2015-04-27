@@ -9,10 +9,22 @@
   {% block css %}
   {% endblock %}
   <script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/2.1.1/jquery.min.js"></script>
-  <title>{% block title %}title{% endblock %} - TUNA 弹幕站</title>
+  
+  <title>{% block title %}title{% endblock %} - {% if language == "zh_CN"%}TUNA 弹幕站{% else %}TUNA Danmaku{%endif%}</title>
 </head>
 <body>
 <div class="container-fluid">
+
+<div class="row">
+	<div class="col-md-8 col-md-offset-2 text-right">
+		{% if language == "zh_CN"%}
+		<a href="?lang=en">English</a>
+		{% else %}
+		<a href="?lang=zh_CN">简体中文</a>
+		{% endif %}
+	</div>
+</div>
+
 {% block body %}
 {% endblock %}
 

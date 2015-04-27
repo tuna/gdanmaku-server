@@ -1,0 +1,81 @@
+<div class="col-md-8 col-md-offset-2">
+<h2>{{channel.desc}}</h2>
+{% if not channel.is_open %}
+<form class="form-inline" role="form" id="set-password-form">
+	<div class="form-group">
+		<label class="sr-only" for="pub_passwd">频道密码: </label>
+		<input type="password" class="form-control" id="pub_password" placeholder="频道密码">
+		<div class="btn btn-success" id="set-password">保存密码</div>
+	</div>
+</form>
+{% endif %}
+<div id="error_container">
+</div>
+<div id="token">{{token}}</div>
+<form id="post-danmaku" action="{{ url_for('api_post_danmaku', cname=channel.name) }}" method="post" role="form">
+
+	<div class="form-group" id="position-selection">
+		<label for="position">弹幕位置</label>
+		<div>
+			<label class="radio-inline">
+				<input type="radio" name="position" value="fly" checked> 飞过
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="position" value="top"> 顶部
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="position" value="bottom"> 底部
+			</label>
+		</div>
+	</div>
+
+	<div class="form-group" id="color-selection">
+		<label for="style">颜色</label>
+		<div>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="blue" checked>
+				<span class="label label-blue">蓝</span>
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="white"> 
+				<span class="label label-white">白</span>
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="red">
+				<span class="label label-red">红</span>
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="yellow">
+				<span class="label label-yellow">黄</span>
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="cyan">
+				<span class="label label-cyan">青</span>
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="green">
+				<span class="label label-green">绿</span>
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="purple">
+				<span class="label label-purple">紫</span>
+			</label>
+			<label class="radio-inline">
+				<input type="radio" name="style" value="black">
+				<span class="label label-black">黑</span>
+			</label>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<label for="danmaku">弹幕内容</label>
+		<input type="text" class="form-control" id="danmaku" name="content" autocomplete="off" placeholder="在此填写弹幕"> 
+	</div>
+
+	<input type="submit" class="btn btn-success" value="发射弹幕" />
+</form>  
+</div> 
+
+{#
+vim: ft=jinja ts=2 sts=2 sw=2
+#}
