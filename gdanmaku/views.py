@@ -17,13 +17,17 @@ def channel_view(cname):
     cm = g.channel_manager
     language = request.args.get("lang", session.get("language", "zh_CN"))
     session["language"] = language
+    passwd = request.args.get("pw", "")
     channel = cm.get_channel(cname)
-    token = channel.gen_web_token()
     if channel is None:
         return "Not Found", 404
 
+    token = channel.gen_web_token()
+
     return render_template(
-        "channel.html", channel=channel, token=token, language=language)
+        "channel.html", channel=channel,
+        token=token, passwd=passwd,
+        language=language)
 
 
 @app.route("/", methods=["GET"])

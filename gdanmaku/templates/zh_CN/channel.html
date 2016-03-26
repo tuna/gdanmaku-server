@@ -1,6 +1,6 @@
 <div class="col-md-8 col-md-offset-2">
 <h2>{{channel.desc}}</h2>
-{% if not channel.is_open %}
+{% if not channel.is_open and not passwd %}
 <form class="form-inline" role="form" id="set-password-form">
 	<div class="form-group">
 		<label class="sr-only" for="pub_passwd">频道密码: </label>
