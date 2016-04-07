@@ -11,6 +11,20 @@
 {% endif %}
 <div id="error_container">
 </div>
+<div class="dropdown">
+  <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+    <span class="glyphicon glyphicon-qrcode"></span>
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+    <li>
+		<div id="qrcode"></div>
+		<script type="text/javascript">
+			new QRCode(document.getElementById("qrcode"), document.URL);
+		</script>
+	</li>
+  </ul>
+</div>
 <div id="token">{{token}}</div>
 <form id="post-danmaku" action="{{ url_for('api_post_danmaku', cname=channel.name) }}" method="post" role="form">
 
@@ -37,7 +51,7 @@
 				<span class="label label-blue">blue</span>
 			</label>
 			<label class="radio-inline">
-				<input type="radio" name="style" value="white"> 
+				<input type="radio" name="style" value="white">
 				<span class="label label-white">white</span>
 			</label>
 			<label class="radio-inline">
@@ -69,12 +83,12 @@
 
 	<div class="form-group">
 		<label for="danmaku">Content</label>
-		<input type="text" class="form-control" id="danmaku" name="content" autocomplete="off" placeholder="Write Danmaku Content Here"> 
+		<input type="text" class="form-control" id="danmaku" name="content" autocomplete="off" placeholder="Write Danmaku Content Here">
 	</div>
 
 	<input type="submit" class="btn btn-success" value="Shoot!" />
-</form>  
-</div> 
+</form>
+</div>
 
 {#
 vim: ft=jinja ts=2 sts=2 sw=2
