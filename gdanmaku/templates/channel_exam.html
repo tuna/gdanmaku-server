@@ -18,7 +18,7 @@
 		<div>
 			<div>
 				<h3>审核队列</h3>
-				<h4>快捷键: 回车键通过第一条弹幕，退格键拒绝第一条弹幕</h4>
+				<h4>快捷键: 回车键通过第一条弹幕，退格/删除键拒绝第一条弹幕</h4>
 			</div>
 			<div class="row" v-for="dm in danmakus" track-by="id">
 				<div class="danmaku" v-bind:class="{'disabled': dm.disabled}">
@@ -143,8 +143,8 @@ $(document).ready(function() {
 				if (code == 13) {
 					// enter key
 					this.post_first_danmaku();
-				} else if (code == 8) {
-					// backspace key
+				} else if (code == 8 || code == 46) {
+					// backspace key or delete key
 					this.ignore_first_danmaku();
 				}
 			}
