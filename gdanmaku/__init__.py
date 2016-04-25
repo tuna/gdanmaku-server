@@ -5,7 +5,9 @@ patch_all()
 
 import redis
 from gevent.wsgi import WSGIServer
-from flask import Flask, g
+from flask import Flask, g, request, session
+from flask.ext.babel import Babel
+
 from . import settings
 from .channel_manager import ChannelManager
 
@@ -14,6 +16,8 @@ app.config.from_object(settings)
 r = redis.StrictRedis(
     host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 chan_mgr = ChannelManager(app, r)
+
+babel = Babel(app)
 
 with app.app_context():
     for kwargs in app.config.get("PERSISTENT_CHANNELS", []):
@@ -30,13 +34,23 @@ def set_channel_manager():
     g.r = r
 
 
+@babel.localeselector
+def get_locale():
+    language = request.args.get(
+        "lang",
+        session.get(
+            "language",
+            request.accept_languages.best_match(['zh', 'en']),
+        ),
+    )
+    session["language"] = language
+    return language
+
 from . import views
 from . import api
 from . import wechat
 
-
 def main():
-    app.debug = True
     http_server = WSGIServer(('', 5000), app)
     print("Serving at 0.0.0.0:5000")
     http_server.serve_forever()

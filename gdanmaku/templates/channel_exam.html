@@ -1,25 +1,30 @@
 {% extends "base.html" %}
-{% block title %}{{channel.desc}} 弹幕审核{% endblock %}
+{% block title %}{{channel.desc}} {{_('Danmaku Review')}}{% endblock %}
 
 {% block body %}
 <div class="row" id="danmaku-exam">
 	<div class="col-md-8 col-md-offset-2">
-		<h2>{{channel.desc}} 弹幕审核</h2>
-		{% raw %}
+		<h2>{{channel.desc}} {{_('Danmaku Review')}}</h2>
 		<form class="form-inline" role="form" @submit="set_exam_passwd" v-show="!exam_passwd">
 			<div class="form-group">
-				<input type="password" class="form-control" v-model="exam_passwd_buf" placeholder="审核密码">
-				<div class="btn btn-success" @click="set_exam_passwd">保存密码</div>
+				<input type="password" class="form-control" v-model="exam_passwd_buf" placeholder="{{_("Review Password")}}">
+				<div class="btn btn-success" @click="set_exam_passwd">{{_("Save")}}</div>
 			</div>
 		</form>
+
+		{% raw %}
 		<div v-show="error_msg">
 			<div class='alert alert-danger'>{{error_msg}}</div>
 		</div>
+		{% endraw %}
+
 		<div>
 			<div>
-				<h3>审核队列</h3>
-				<h4>快捷键: 回车键通过第一条弹幕，退格/删除键拒绝第一条弹幕</h4>
+				<h3>{{_("Review List")}}</h3>
+				<h4>{{_("Keyboard Shortcut: &lt;Enter&gt; to pass the 1st danmaku, &lt;Backspace&gt; or &lt;Delete&gt; to supress the first danmaku") }}</h4>
 			</div>
+
+		{% raw %}
 			<div class="row" v-for="dm in danmakus" track-by="id">
 				<div class="danmaku" v-bind:class="{'disabled': dm.disabled}">
 					<div class="col-md-1 text-left">
@@ -99,9 +104,9 @@ $(document).ready(function() {
 				})
 				.fail(function(xhr, textStatus, errorThrown){
 					if (xhr.status == 403) {
-						danmakuVue.show_error("密码有误，请刷新重设！");
+						danmakuVue.show_error("{{_('Wrong password, refresh the page to reset!')}}");
 					} else {
-						danmakuVue.show_error("发生奇怪错误，请刷新重试！");
+						danmakuVue.show_error("{{_('Something Wired happend, refresh the page to retry!')}}");
 					}
 				});
 			},
@@ -171,7 +176,7 @@ $(document).ready(function() {
 			if (xhr.readyState == 4 ) {
 				// HTTP errror 
 				if (xhr.status == 403)	{
-					danmakuVue.show_error("密码有误，请刷新重设！");
+					danmakuVue.show_error("{{_('Wrong password, refresh the page to reset!')}}");
 				}
 			} else if (xhr.readyState == 0) {
 				// network error 
@@ -179,7 +184,7 @@ $(document).ready(function() {
 				window.setTimeout(window.poll_danmaku, 2000);
 			}else {
 				// something wired happend  
-				danmakuVue.show_error("发生奇怪错误，请刷新重试！");
+				danmakuVue.show_error("{{_('Something Wired happend, refresh the page to retry!')}}");
 			}
 		});
 	} //poll_danmaku

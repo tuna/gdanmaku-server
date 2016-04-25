@@ -1,0 +1,218 @@
+# Translations template for PROJECT.
+# Copyright (C) 2016 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-04-25 23:26+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+
+#: templates/base.html:17
+msgid "TUNA Danmaku Site"
+msgstr ""
+
+#: templates/channel.html:11
+msgid "Channel Password"
+msgstr ""
+
+#: templates/channel.html:12 templates/channel_exam.html:11
+msgid "Save"
+msgstr ""
+
+#: templates/channel.html:41
+msgid "Position"
+msgstr ""
+
+#: templates/channel.html:44
+msgid "Fly"
+msgstr ""
+
+#: templates/channel.html:47
+msgid "Top"
+msgstr ""
+
+#: templates/channel.html:50
+msgid "Bottom"
+msgstr ""
+
+#: templates/channel.html:56
+msgid "Color"
+msgstr ""
+
+#: templates/channel.html:60
+msgid "blue"
+msgstr ""
+
+#: templates/channel.html:64
+msgid "white"
+msgstr ""
+
+#: templates/channel.html:68
+msgid "red"
+msgstr ""
+
+#: templates/channel.html:72
+msgid "yellow"
+msgstr ""
+
+#: templates/channel.html:76
+msgid "cyan"
+msgstr ""
+
+#: templates/channel.html:80
+msgid "green"
+msgstr ""
+
+#: templates/channel.html:84
+msgid "purple"
+msgstr ""
+
+#: templates/channel.html:88
+msgid "black"
+msgstr ""
+
+#: templates/channel.html:94
+msgid "Content"
+msgstr ""
+
+#: templates/channel.html:95
+msgid "Write Danmaku Content Here"
+msgstr ""
+
+#: templates/channel.html:98
+msgid "Shoot!"
+msgstr ""
+
+#: templates/channel.html:146 templates/channel_exam.html:107
+#: templates/channel_exam.html:179
+msgid "Wrong password, refresh the page to reset!"
+msgstr ""
+
+#: templates/channel.html:149
+msgid "You are operating too fast, calm down and refresh the page!"
+msgstr ""
+
+#: templates/channel.html:152
+msgid "Invalid request, refresh the page and retry!"
+msgstr ""
+
+#: templates/channel_exam.html:2 templates/channel_exam.html:7
+msgid "Danmaku Review"
+msgstr ""
+
+#: templates/channel_exam.html:10 templates/new_channel.html:46
+msgid "Review Password"
+msgstr ""
+
+#: templates/channel_exam.html:23
+msgid "Review List"
+msgstr ""
+
+#: templates/channel_exam.html:24
+msgid ""
+"Keyboard Shortcut: &lt;Enter&gt; to pass the 1st danmaku, "
+"&lt;Backspace&gt; or &lt;Delete&gt; to supress the first danmaku"
+msgstr ""
+
+#: templates/channel_exam.html:109 templates/channel_exam.html:187
+msgid "Something Wired happend, refresh the page to retry!"
+msgstr ""
+
+#: templates/index.html:4 templates/index.html:10
+msgid "Channel Index"
+msgstr ""
+
+#: templates/index.html:14
+msgid "Name"
+msgstr ""
+
+#: templates/index.html:15 templates/new_channel.html:28
+msgid "Description"
+msgstr ""
+
+#: templates/index.html:16
+msgid "Operations"
+msgstr ""
+
+#: templates/index.html:23
+msgid "Examine"
+msgstr ""
+
+#: templates/index.html:28 templates/new_channel.html:3
+#: templates/new_channel.html:9
+msgid "New Channel"
+msgstr ""
+
+#: templates/new_channel.html:14
+msgid "Notice"
+msgstr ""
+
+#: templates/new_channel.html:16
+msgid ""
+"Channel name must only contain letters, numbers, dash and underline, and "
+"must starts with a letter"
+msgstr ""
+
+#: templates/new_channel.html:17
+msgid "Playing password is requered, publish and review password are optional"
+msgstr ""
+
+#: templates/new_channel.html:22
+msgid "Channel Name"
+msgstr ""
+
+#: templates/new_channel.html:24
+msgid "Channel Name(letters, numbers, dash, underline)"
+msgstr ""
+
+#: templates/new_channel.html:30
+msgid "Short text for description"
+msgstr ""
+
+#: templates/new_channel.html:34
+msgid "Playing Password"
+msgstr ""
+
+#: templates/new_channel.html:36
+msgid "Password for playing danmaku (required)"
+msgstr ""
+
+#: templates/new_channel.html:40
+msgid "Publish Password"
+msgstr ""
+
+#: templates/new_channel.html:42
+msgid "Password for publishing danmaku (optional)"
+msgstr ""
+
+#: templates/new_channel.html:48
+msgid "If contents need reviewing, fill this password (optional)"
+msgstr ""
+
+#: templates/new_channel.html:52
+msgid "Channel Lifetime"
+msgstr ""
+
+#: templates/new_channel.html:55
+msgid "Hour"
+msgstr ""
+
+#: templates/new_channel.html:58 templates/new_channel.html:61
+#: templates/new_channel.html:64 templates/new_channel.html:67
+msgid "Hours"
+msgstr ""
+
+#: templates/new_channel.html:74
+msgid "Submit"
+msgstr ""
+

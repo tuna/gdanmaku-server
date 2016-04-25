@@ -14,6 +14,8 @@ FILE_PATH = os.path.dirname(__file__)
 DB_PATH = os.path.join(FILE_PATH, "db")
 MEDIA_PATH = os.path.join(FILE_PATH, "media")
 
+# BABEL_DEFAULT_LOCALE = "zh_CN"
+
 # DB
 REDIS_HOST = 'myredis'
 REDIS_PORT = 6379

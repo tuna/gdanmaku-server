@@ -8,9 +8,8 @@
 		{% if not channel.is_open and not passwd %}
 		<form class="form-inline" role="form" @submit="set_passwd" v-show="!pub_passwd">
 			<div class="form-group">
-				<label class="sr-only" for="pub_passwd">Channel Password: </label>
-				<input type="password" class="form-control" v-model="pub_passwd_buf" placeholder="频道密码">
-				<div class="btn btn-success" @click="set_passwd">Save</div>
+				<input type="password" class="form-control" v-model="pub_passwd_buf" placeholder="{{_('Channel Password')}}">
+				<div class="btn btn-success" @click="set_passwd">{{_('Save')}}</div>
 			</div>
 		</form>
 		{% endif %}
@@ -39,64 +38,64 @@
 		{# danmaku form #}
 		<form @submit="post_danmaku">
 			<div class="form-group" id="position-selection">
-				<label for="position">Position</label>
+				<label for="position">{{_('Position')}}</label>
 				<div>
 					<label class="radio-inline">
-						<input type="radio" name="position" value="fly" v-model="position" checked> Fly
+						<input type="radio" name="position" value="fly" v-model="position" checked> {{_('Fly')}}
 					</label>
 					<label class="radio-inline">
-						<input type="radio" name="position" value="top" v-model="position"> Top
+						<input type="radio" name="position" value="top" v-model="position"> {{_('Top')}}
 					</label>
 					<label class="radio-inline">
-						<input type="radio" name="position" value="bottom" v-model="position"> Bottom
+						<input type="radio" name="position" value="bottom" v-model="position"> {{_('Bottom')}}
 					</label>
 				</div>
 			</div>
 
 			<div class="form-group" id="color-selection">
-				<label for="style">Color</label>
+				<label for="style">{{_('Color')}}</label>
 				<div>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="blue" v-model="color" checked>
-						<span class="label label-blue">blue</span>
+						<span class="label label-blue">{{_('blue')}}</span>
 					</label>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="white" v-model="color">
-						<span class="label label-white">white</span>
+						<span class="label label-white">{{_('white')}}</span>
 					</label>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="red" v-model="color">
-						<span class="label label-red">red</span>
+						<span class="label label-red">{{_('red')}}</span>
 					</label>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="yellow" v-model="color">
-						<span class="label label-yellow">yellow</span>
+						<span class="label label-yellow">{{_('yellow')}}</span>
 					</label>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="cyan" v-model="color">
-						<span class="label label-cyan">cyan</span>
+						<span class="label label-cyan">{{_('cyan')}}</span>
 					</label>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="green" v-model="color">
-						<span class="label label-green">green</span>
+						<span class="label label-green">{{_('green')}}</span>
 					</label>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="purple" v-model="color">
-						<span class="label label-purple">purple</span>
+						<span class="label label-purple">{{_('purple')}}</span>
 					</label>
 					<label class="radio-inline">
 						<input type="radio" name="style" value="black" v-model="color">
-						<span class="label label-black">black</span>
+						<span class="label label-black">{{_('black')}}</span>
 					</label>
 				</div>
 			</div>
 
 			<div class="form-group">
-				<label for="danmaku">Content</label>
-				<input type="text" class="form-control" name="content" autocomplete="off" v-model="content" placeholder="Write Danmaku Content Here">
+				<label for="danmaku">{{_('Content')}}</label>
+				<input type="text" class="form-control" name="content" autocomplete="off" v-model="content" placeholder="{{_('Write Danmaku Content Here')}}">
 			</div>
 
-			<input type="submit" class="btn btn-success" value="Shoot!" :disabled="disabled" />
+			<input type="submit" class="btn btn-success" value="{{_('Shoot!')}}" :disabled="disabled" />
 		</form>
 	</div>
 </div>
@@ -144,13 +143,13 @@ $(document).ready(function() {
 					},
 					statusCode: {
 						403: function() {
-							channelVue.show_error("密码有误，请刷新重设！");
+							channelVue.show_error("{{_('Wrong password, refresh the page to reset!')}}");
 						},
 						428: function() {
-							channelVue.show_error("发送过快，刷新页面！");
+							channelVue.show_error("{{_('You are operating too fast, calm down and refresh the page!')}}");
 						},
 						400: function() {
-							channelVue.show_error("发送请求有误，请刷新页面回炉再造！");
+							channelVue.show_error("{{_('Invalid request, refresh the page and retry!')}}");
 						}
 					}
 				});

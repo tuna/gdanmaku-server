@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding:utf-8 -*-
 from flask import render_template
-from flask import request, g, Response, session
+from flask import request, g, session
 import gevent
 
 from . import app
@@ -15,8 +15,6 @@ danmaku_channels = {
 @app.route("/channel/<cname>", methods=["GET"])
 def channel_view(cname):
     cm = g.channel_manager
-    language = request.args.get("lang", session.get("language", "zh_CN"))
-    session["language"] = language
     passwd = request.args.get("pw", "")
     channel = cm.get_channel(cname)
     if channel is None:
@@ -26,8 +24,7 @@ def channel_view(cname):
 
     return render_template(
         "channel.html", channel=channel,
-        token=token, passwd=passwd,
-        language=language)
+        token=token, passwd=passwd)
 
 
 @app.route("/channel/<cname>/examination", methods=["GET"])

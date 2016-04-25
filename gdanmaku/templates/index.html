@@ -1,25 +1,40 @@
 {% extends "base.html" %}
 
 {% block title %} 
-{% if language == "zh_CN" %}频道列表{% else %}Channels{% endif %}
+{{_("Channel Index")}}
 {% endblock %}
 
 {% block body %}
 <div class="row">
-  <div class="col-md-8 col-md-offset-2">
-	{% if language == "zh_CN" %}
-		{% include "zh_CN/index.html"%}
-	{% else %}
-		{% include "en/index.html"%}
-	{% endif %}
-  </div>
+	<div class="col-md-8 col-md-offset-2">
+		<h2>{{_("Channel Index")}}</h2>
+		<div>
+			<table class="table table-responsive">
+				<thead>
+					<th> {{_("Name")}} </th>
+					<th> {{_("Description")}} </th>
+					<th> {{_("Operations")}} </th>
+				</thead>
+				<tbody>
+					{%- for chan in channels %}
+					<tr>
+						<td><a href="{{ url_for("channel_view", cname=chan.name) }}">{% if not chan.is_open %}<i class="glyphicon glyphicon-lock"></i>{% endif %} {{ chan.name }}</a> </td>
+						<td>{{ chan.desc }}</td>
+						<td>{% if chan.need_exam %}<a href="{{url_for("channel_examination_view", cname=chan.name)}}">{{_("Examine")}}</a>{% endif %}</td>
+					</tr>
+					{% endfor -%}
+				</tbody>
+			</table>
+			<a class="btn btn-success" href="{{ url_for("channel_create") }}">{{_("New Channel")}}</a>
+		</div>
+	</div>
 </div>
 {% endblock %}
 
 {% block css %}
 <style type="text/css">
 body {
-  padding-top: 40px; 
+	padding-top: 40px; 
 }
 </style>
 {% endblock %}

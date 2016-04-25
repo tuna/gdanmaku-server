@@ -1,17 +1,82 @@
 {% extends "base.html" %}
 {% block title %} 
-{% if language == "zh_CN" %}创建列表{% else %}New Channel{% endif %}
+{% if language == "zh_CN" %}{{_("New Channel")}}{% endif %}
 {% endblock %}
 
 {% block body %}
 <div class="row">
-  <div class="col-md-8 col-md-offset-2">
-	{% if language == "zh_CN" %}
-		{% include "zh_CN/new_channel.html"%}
-	{% else %}
-		{% include "en/new_channel.html"%}
-	{% endif %}
-  </div>
+	<div class="col-md-8 col-md-offset-2">
+		<h2>{{_("New Channel")}}</h2>
+		<div>
+			<div id="error_container">
+			</div>
+			<div class="alert alert-info">
+				<p><strong>{{_('Notice')}}:</strong></p>
+				<ul>
+					<li>{{_('Channel name must only contain letters, numbers, dash and underline, and must starts with a letter')}}</li>
+					<li>{{_('Playing password is requered, publish and review password are optional')}}</li>
+				</ul>
+			</div>
+			<form class="form-horizontal" role="form">
+				<div class="form-group">
+					<label for="name" class="col-sm-2 control-label">{{_('Channel Name')}}</label>
+					<div class="col-sm-10">
+						<input autocomplete="off" type="text" class="form-control" name="name" id="name" placeholder="{{_('Channel Name(letters, numbers, dash, underline)')}}">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="desc" class="col-sm-2 control-label">{{_('Description')}}</label>
+					<div class="col-sm-10">
+						<input autocomplete="off" type="text" class="form-control" id="desc" name="desc" placeholder="{{_('Short text for description')}}">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="sub_passwd" class="col-sm-2 control-label">{{_('Playing Password')}}</label>
+					<div class="col-sm-10">
+						<input autocomplete="off" type="password" class="form-control" id="sub_passwd" name="sub_passwd" placeholder="{{_('Password for playing danmaku (required)')}}">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="pub_passwd" class="col-sm-2 control-label">{{_('Publish Password')}}</label>
+					<div class="col-sm-10">
+						<input autocomplete="off" type="password" class="form-control" id="pub_passwd" name="pub_passwd" placeholder="{{_('Password for publishing danmaku (optional)')}}">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="pub_passwd" class="col-sm-2 control-label">{{_('Review Password')}}</label>
+					<div class="col-sm-10">
+						<input autocomplete="off" type="password" class="form-control" id="exam_passwd" name="exam_passwd" placeholder="{{_('If contents need reviewing, fill this password (optional)')}}">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="ttl" class="col-sm-2 control-label">{{_('Channel Lifetime')}}</label>
+					<div class="col-sm-10" id="ttl-selection">
+						<label class="radio-inline">
+							<input type="radio" name="ttl" value="1" checked> 1 {{_('Hour')}}
+						</label>
+						<label class="radio-inline">
+							<input type="radio" name="ttl" value="2"> 2 {{_('Hours')}}
+						</label>
+						<label class="radio-inline">
+							<input type="radio" name="ttl" value="3"> 3 {{_('Hours')}}
+						</label>
+						<label class="radio-inline">
+							<input type="radio" name="ttl" value="5"> 5 {{_('Hours')}}
+						</label>
+						<label class="radio-inline">
+							<input type="radio" name="ttl" value="12"> 12 {{_('Hours')}}
+						</label>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="col-sm-12">
+						<div class="btn btn-default btn-success" id="submit">{{_('Submit')}}</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
 </div>
 
 
@@ -20,7 +85,7 @@
 {% block css %}
 <style type="text/css">
 body {
-  padding-top: 40px; 
+	padding-top: 40px; 
 }
 </style>
 {% endblock %}
@@ -28,56 +93,56 @@ body {
 {% block js %}
 <script type="text/javascript">
 $(document).ready(function() {
-  var show_error = function(msg) {
-    $("#error_container").html("<div class='alert alert-danger'>" + msg + "</div>"); 
-  };
+	var show_error = function(msg) {
+		$("#error_container").html("<div class='alert alert-danger'>" + msg + "</div>"); 
+	};
 
-  var validate = function() {
-    var valid = true;
-    var namer = /^[a-zA-Z][a-zA-Z0-9_\-]{1,}$/;
+	var validate = function() {
+		var valid = true;
+		var namer = /^[a-zA-Z][a-zA-Z0-9_\-]{1,}$/;
 
-    if(!$("#name").val().match(namer)) {
-      show_error("频道名称有误！"); 
-      return false;
-    }
-    if($("#desc").val() == "") {
-      show_error("频道说明必填！");
-      return false;
-    }
-    if($("#sub_passwd").val() == "") {
-      show_error("播放密码必填！");
-      return false;
-    }
+		if(!$("#name").val().match(namer)) {
+			show_error("频道名称有误！"); 
+			return false;
+		}
+		if($("#desc").val() == "") {
+			show_error("频道说明必填！");
+			return false;
+		}
+		if($("#sub_passwd").val() == "") {
+			show_error("播放密码必填！");
+			return false;
+		}
 
-    return valid;
-  };
+		return valid;
+	};
 
-  $('#submit').click(function(){
-    if (validate() == false) {
-      return;
-    }
+	$('#submit').click(function(){
+		if (validate() == false) {
+			return;
+		}
 
-    $.ajax({
-      type: "POST",
-      url: "{{ url_for('api_create_channel') }}",
-      headers: {"Content-Type": "application/json"},
-      data: JSON.stringify({
-        "name": $("#name").val(),
-        "desc": $("#desc").val(),
-        "ttl": $("form input[name=ttl]:checked").val(),
-        "sub_passwd": $("#sub_passwd").val(),
-        "pub_passwd": $("#pub_passwd").val(),
-        "exam_passwd": $("#exam_passwd").val()
-      }),
-      success: function(data) {
-        document.location.href = data.url; 
-      },
-      error: function(jqxhr, text) {
-        show_error(jqxhr.responseText);
-      }
-    }); 
+		$.ajax({
+			type: "POST",
+			url: "{{ url_for('api_create_channel') }}",
+			headers: {"Content-Type": "application/json"},
+			data: JSON.stringify({
+				"name": $("#name").val(),
+				"desc": $("#desc").val(),
+				"ttl": $("form input[name=ttl]:checked").val(),
+				"sub_passwd": $("#sub_passwd").val(),
+				"pub_passwd": $("#pub_passwd").val(),
+				"exam_passwd": $("#exam_passwd").val()
+			}),
+			success: function(data) {
+				document.location.href = data.url; 
+			},
+			error: function(jqxhr, text) {
+				show_error(jqxhr.responseText);
+			}
+		}); 
 
-  });
+	});
 
 
 });

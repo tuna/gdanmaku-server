@@ -1,0 +1,218 @@
+# Chinese translations for PROJECT.
+# Copyright (C) 2016 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-04-25 23:26+0800\n"
+"PO-Revision-Date: 2016-04-25 22:47+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh\n"
+"Language-Team: zh <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+
+#: templates/base.html:17
+msgid "TUNA Danmaku Site"
+msgstr "TUNA 弹幕站"
+
+#: templates/channel.html:11
+msgid "Channel Password"
+msgstr "频道密码"
+
+#: templates/channel.html:12 templates/channel_exam.html:11
+msgid "Save"
+msgstr "保存"
+
+#: templates/channel.html:41
+msgid "Position"
+msgstr "位置"
+
+#: templates/channel.html:44
+msgid "Fly"
+msgstr "飞过"
+
+#: templates/channel.html:47
+msgid "Top"
+msgstr "顶部"
+
+#: templates/channel.html:50
+msgid "Bottom"
+msgstr "底部"
+
+#: templates/channel.html:56
+msgid "Color"
+msgstr "颜色"
+
+#: templates/channel.html:60
+msgid "blue"
+msgstr "蓝"
+
+#: templates/channel.html:64
+msgid "white"
+msgstr "白"
+
+#: templates/channel.html:68
+msgid "red"
+msgstr "红"
+
+#: templates/channel.html:72
+msgid "yellow"
+msgstr "黄"
+
+#: templates/channel.html:76
+msgid "cyan"
+msgstr "青"
+
+#: templates/channel.html:80
+msgid "green"
+msgstr "绿"
+
+#: templates/channel.html:84
+msgid "purple"
+msgstr "紫"
+
+#: templates/channel.html:88
+msgid "black"
+msgstr "黑"
+
+#: templates/channel.html:94
+msgid "Content"
+msgstr "内容"
+
+#: templates/channel.html:95
+msgid "Write Danmaku Content Here"
+msgstr "在此装填弹幕"
+
+#: templates/channel.html:98
+msgid "Shoot!"
+msgstr "发射"
+
+#: templates/channel.html:146 templates/channel_exam.html:107
+#: templates/channel_exam.html:179
+msgid "Wrong password, refresh the page to reset!"
+msgstr "密码错误，请刷新重设！"
+
+#: templates/channel.html:149
+msgid "You are operating too fast, calm down and refresh the page!"
+msgstr "操作过快，请冷静下来，刷新重试！"
+
+#: templates/channel.html:152
+msgid "Invalid request, refresh the page and retry!"
+msgstr "非法请求，请刷新回炉再造！"
+
+#: templates/channel_exam.html:2 templates/channel_exam.html:7
+msgid "Danmaku Review"
+msgstr "弹幕审核"
+
+#: templates/channel_exam.html:10 templates/new_channel.html:46
+msgid "Review Password"
+msgstr "审核密码"
+
+#: templates/channel_exam.html:23
+msgid "Review List"
+msgstr "审核队列"
+
+#: templates/channel_exam.html:24
+msgid ""
+"Keyboard Shortcut: &lt;Enter&gt; to pass the 1st danmaku, "
+"&lt;Backspace&gt; or &lt;Delete&gt; to supress the first danmaku"
+msgstr "快捷键: 回车键通过第一条弹幕，退格/删除键拒绝第一条弹幕"
+
+#: templates/channel_exam.html:109 templates/channel_exam.html:187
+msgid "Something Wired happend, refresh the page to retry!"
+msgstr "发生未知错误，请刷新重试！"
+
+#: templates/index.html:4 templates/index.html:10
+msgid "Channel Index"
+msgstr "频道列表"
+
+#: templates/index.html:14
+msgid "Name"
+msgstr "频道名"
+
+#: templates/index.html:15 templates/new_channel.html:28
+msgid "Description"
+msgstr "描述"
+
+#: templates/index.html:16
+msgid "Operations"
+msgstr "操作"
+
+#: templates/index.html:23
+msgid "Examine"
+msgstr "审核"
+
+#: templates/index.html:28 templates/new_channel.html:3
+#: templates/new_channel.html:9
+msgid "New Channel"
+msgstr "新建频道"
+
+#: templates/new_channel.html:14
+msgid "Notice"
+msgstr "说明"
+
+#: templates/new_channel.html:16
+msgid ""
+"Channel name must only contain letters, numbers, dash and underline, and "
+"must starts with a letter"
+msgstr "频道名称仅有字母、数字、下划线、横线组成, 且以字母开头"
+
+#: templates/new_channel.html:17
+msgid "Playing password is requered, publish and review password are optional"
+msgstr "播放密码必填，发布、审核密码选填"
+
+#: templates/new_channel.html:22
+msgid "Channel Name"
+msgstr "频道名"
+
+#: templates/new_channel.html:24
+msgid "Channel Name(letters, numbers, dash, underline)"
+msgstr "频道名(字母、数字、下划线、横线)"
+
+#: templates/new_channel.html:30
+msgid "Short text for description"
+msgstr "简短的文字说明"
+
+#: templates/new_channel.html:34
+msgid "Playing Password"
+msgstr "播放密码"
+
+#: templates/new_channel.html:36
+msgid "Password for playing danmaku (required)"
+msgstr "播放弹幕所需密码(必填)"
+
+#: templates/new_channel.html:40
+msgid "Publish Password"
+msgstr "发布密码"
+
+#: templates/new_channel.html:42
+msgid "Password for publishing danmaku (optional)"
+msgstr "发射弹幕所需密码(选填)"
+
+#: templates/new_channel.html:48
+msgid "If contents need reviewing, fill this password (optional)"
+msgstr "若需要审核弹幕，请填写审核密码(选填)"
+
+#: templates/new_channel.html:52
+msgid "Channel Lifetime"
+msgstr "使用时长"
+
+#: templates/new_channel.html:55
+msgid "Hour"
+msgstr "小时"
+
+#: templates/new_channel.html:58 templates/new_channel.html:61
+#: templates/new_channel.html:64 templates/new_channel.html:67
+msgid "Hours"
+msgstr "小时"
+
+#: templates/new_channel.html:74
+msgid "Submit"
+msgstr "提交"
