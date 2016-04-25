@@ -1,27 +1,24 @@
-FROM python:2.7-slim
+FROM python:2.7-alpine
 
-RUN useradd danmaku
+RUN adduser -S danmaku
 USER danmaku
 
 COPY requirements.txt /data/requirements.txt
 
 USER root
 
-RUN echo "deb http://mirrors.tuna.tsinghua.edu.cn/debian/ jessie main contrib non-free" > /etc/apt/sources.list && \
-	echo "deb http://mirrors.tuna.tsinghua.edu.cn/debian/ jessie-backports main contrib non-free" >> /etc/apt/sources.list && \
-	echo "deb http://mirrors.tuna.tsinghua.edu.cn/debian/ jessie-updates main contrib non-free" >> /etc/apt/sources.list && \
-	echo "deb http://mirrors.tuna.tsinghua.edu.cn/debian-security/ jessie/updates main contrib non-free" >> /etc/apt/sources.list
+# RUN echo "http://mirrors.tuna.tsinghua.edu.cn/alpine/v3.3/main" > /etc/apk/repositories  && \
+# 	echo "[global]" > /etc/pip.conf && \
+# 	echo "index-url=https://pypi.tuna.tsinghua.edu.cn/simple" >> /etc/pip.conf
 
-RUN echo "[global]" > /etc/pip.conf && \
-	echo "index-url=https://pypi.tuna.tsinghua.edu.cn/simple" >> /etc/pip.conf
-
-RUN apt-get update && apt-get install -y gcc
+RUN apk add --update --no-cache --virtual .build-deps \
+	gcc libc-dev linux-headers
 
 RUN pip2 install --upgrade pip setuptools && \
 	pip2 install cython && \
 	pip2 install -r /data/requirements.txt
 
-RUN apt-get remove -y gcc && apt-get -y autoremove && apt-get -y clean 
+RUN apk del .build-deps
 
 WORKDIR /data
 USER danmaku
