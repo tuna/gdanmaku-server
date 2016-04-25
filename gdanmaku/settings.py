@@ -15,7 +15,7 @@ DB_PATH = os.path.join(FILE_PATH, "db")
 MEDIA_PATH = os.path.join(FILE_PATH, "media")
 
 # DB
-REDIS_HOST = 'redis'
+REDIS_HOST = 'myredis'
 REDIS_PORT = 6379
 REDIS_DB = 1
 REDIS_PREFIX = "gd_"

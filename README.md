@@ -41,7 +41,7 @@ docker build --tag danmaku:dev .
 We need to mount the code as volume to the docker container, and link redis to it. Try
 
 ```
-docker run -it --rm --link myredis:redis -v /path/to/gdanmaku-server:/data/gdanmaku -p 127.0.0.1:5000:5000 danmaku:dev python2 gdanmaku/webserver.py
+docker run -it --rm --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p 127.0.0.1:5000:5000 danmaku:dev python2 gdanmaku/webserver.py
 ```
 
 Open your browser and visit <http://localhost:5000/>, you should see the danmaku web page.
@@ -49,7 +49,7 @@ Open your browser and visit <http://localhost:5000/>, you should see the danmaku
 If you wanna run danmaku service as a daemon, use
 
 ```
-docker run -d --name danmaku --link myredis:redis -v /path/to/gdanmaku-server:/data/gdanmaku -p 127.0.0.1:5000:5000 danmaku:dev python2 gdanmaku/webserver.py
+docker run -d --name danmaku --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p 127.0.0.1:5000:5000 danmaku:dev python2 gdanmaku/webserver.py
 ```
 
 Good luck, and have fun!
