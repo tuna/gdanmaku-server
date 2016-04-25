@@ -57,7 +57,3 @@ Good luck, and have fun!
 ## Client
 
 The official desktop client is available at https://github.com/bigeagle/danmaQ 
-
-## TODO
-
-- [ ] i18n
