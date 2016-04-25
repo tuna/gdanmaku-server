@@ -67,11 +67,6 @@ def api_post_danmaku(cname):
     if channel is None:
         return "Not Found", 404
 
-    if not channel.is_open:
-        key = request.headers.get("X-GDANMAKU-AUTH-KEY")
-        if key is None or (not channel.verify_pub_passwd(key)):
-            return "Forbidden", 403
-
     valid_exam_client = False
     if channel.need_exam:
         exam_key = request.headers.get("X-GDANMAKU-EXAM-KEY", None)
@@ -84,6 +79,14 @@ def api_post_danmaku(cname):
 
     # if this is to exam, no need to limit rate
     if not valid_exam_client:
+
+        # publishing password verification is not needed for examining clients
+        if not channel.is_open:
+            key = request.headers.get("X-GDANMAKU-AUTH-KEY")
+            if key is None or (not channel.verify_pub_passwd(key)):
+                return "Forbidden", 403
+
+        # token for rate limiting and simple captcha
         _token = request.headers.get("X-GDANMAKU-TOKEN")
         if _token is None:
             return "Token is required", 400
