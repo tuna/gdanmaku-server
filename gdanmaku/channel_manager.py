@@ -206,11 +206,21 @@ class Channel(object):
         g.r.expire(bname, self.ttl())
 
     def pop_exam_danmakus(self):
+        msgs = []
         bname = self.prefix() + self.name + "_exam"
+
+        # many agents may be examining danakus at the same time
+        # so atomic popping is needed
+        def pop_dm_transaction(pipe):
+            jmsgs = pipe.lrange(bname, 0, -1)
+            pipe.delete(bname)
+            pipe.multi()
+            for m in jmsgs:
+                msgs.append(json.loads(m))
+
         if g.r.exists(bname):
-            msg = g.r.lrange(bname, 0, -1)
-            g.r.delete(bname)
-            return map(lambda x: json.loads(x), msg)
+            g.r.transaction(pop_dm_transaction, bname)
+            return msgs
 
         ret = g.r.blpop(bname, timeout=5)
         if ret is None:

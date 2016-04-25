@@ -5,22 +5,24 @@
 <div class="row" id="danmaku-exam">
 	<div class="col-md-8 col-md-offset-2">
 		<h2>{{channel.desc}} 弹幕审核</h2>
-		{% if not passwd %}
-		<form class="form-inline" role="form" id="set-password-form">
+		{% raw %}
+		<form class="form-inline" role="form" @submit="set_exam_passwd" v-show="!exam_passwd">
 			<div class="form-group">
-				<input type="password" class="form-control" id="exam_password" placeholder="审核密码">
-				<div class="btn btn-success" id="set-password">保存密码</div>
+				<input type="password" class="form-control" v-model="exam_passwd_buf" placeholder="审核密码">
+				<div class="btn btn-success" @click="set_exam_passwd">保存密码</div>
 			</div>
 		</form>
-		{% endif %}
-		<div id="error_container">
+		<div v-show="error_msg">
+			<div class='alert alert-danger'>{{error_msg}}</div>
 		</div>
-		{% raw %}
 		<div>
+			<div>
+				<h3>审核队列</h3>
+			</div>
 			<div class="row" v-for="dm in danmakus" track-by="id">
 				<div class="danmaku">
 					<div class="col-md-1 text-left">
-						<div class="btn btn-success" @click="post_danmaku($index)">
+						<div class="btn btn-success" @click="post_danmaku($index)" :disabled="dm.disabled">
 							✓
 						</div>
 					</div>
@@ -28,7 +30,7 @@
 						{{ dm.content }}
 					</div>
 					<div class="col-md-1"></div>
-						<div class="btn btn-danger" @click="ignore_danmaku($index)">
+						<div class="btn btn-danger" @click="ignore_danmaku($index)" :disabled="dm.disabled">
 							&times;
 						</div>
 					</div>
@@ -36,17 +38,6 @@
 			</div>
 		</div>
 		{% endraw %}
-
-		{#
-		<form id="post-danmaku" action="{{ url_for('api_post_danmaku', cname=channel.name) }}" method="post" role="form">
-			<div class="form-group">
-				<label for="danmaku">弹幕内容</label>
-				<input type="text" class="form-control" id="danmaku" name="content" autocomplete="off" placeholder="在此填写弹幕">
-			</div>
-
-			<input type="submit" class="btn btn-success" value="发射弹幕" />
-		</form>
-		#}
 	</div>
 </div>
 {% endblock %}
@@ -55,55 +46,18 @@
 <script type="text/javascript">
 
 $(document).ready(function() {
-	var exam_passwd = "{{passwd}}";
-	
-	if($("#set-password").length > 0) {
-		$("#set-password").click(function() {
-			exam_passwd = $("#exam_password").val(); 
-			$("#set-password-form").addClass("hide");
-			window.setTimeout(window.pull_danmaku, 50);
-		});
-	}
-
-	var show_error = function(msg) {
-		$("#error_container").html("<div class='alert alert-danger'>" + msg + "</div>"); 
-	};
-
-
-	var post_danmaku = function(danmaku) {
-
-		// console.log(data);
-		// console.log(pub_passwd);
-		$.ajax({
-			type: "POST",
-			dataType: "json",
-			headers: {
-				"Content-Type": "application/json",
-				"X-GDANMAKU-EXAM-KEY": exam_passwd
-			},
-			url: "{{ url_for('api_post_danmaku', cname=channel.name) }}",
-			data: JSON.stringify(danmaku),
-			success: function(resp){ 
-				console.log("posted");
-			},
-			statusCode: {
-				403: function() {
-					show_error("密码有误，请刷新重设！");
-				}
-			}
-		});
-
-		return false; 
-	};
-	
 	var danmakuData = {
 		current_id: 0,
-		danmakus: []
+		danmakus: [],
+		exam_passwd_buf: "",
+		exam_passwd: "{{passwd}}",
+		error_msg: ""
 	}
 
 	var new_danmaku = function(danmaku) {
 		danmakuData.current_id++;
 		danmaku.id = danmakuData.current_id;
+		danmaku.disabled = false;
 		danmakuData.danmakus.push(danmaku);
 	}
 	
@@ -112,51 +66,73 @@ $(document).ready(function() {
 		data: danmakuData,
 		methods: {
 			post_danmaku: function(idx) {
-				// console.log(idx);
 				var dm = this.danmakus[idx];
-				this.danmakus.splice(idx, 1);
-				post_danmaku(dm);
+				dm.disabled = true;
+				this.danmakus.$set(idx, dm);
+
+				$.ajax({
+					type: "POST",
+					dataType: "json",
+					headers: {
+						"Content-Type": "application/json",
+						"X-GDANMAKU-EXAM-KEY": this.exam_passwd
+					},
+					url: "{{ url_for('api_post_danmaku', cname=channel.name) }}",
+					data: JSON.stringify(dm),
+					success: function(resp){ 
+						danmakuVue.danmakus.splice(idx, 1);
+					},
+					statusCode: {
+						403: function() {
+							danmakuVue.show_error("密码有误，请刷新重设！");
+						}
+					}
+				});
 			},
 			ignore_danmaku: function(idx) {
 				this.danmakus.splice(idx, 1);
+			},
+			set_exam_passwd: function(ev) {
+				ev.preventDefault();
+				this.exam_passwd = this.exam_passwd_buf;
+				exam_passwd = this.exam_passwd_buf;
+				window.setTimeout(window.pull_danmaku, 50);
+			},
+			show_error: function(msg) {
+				this.error_msg = msg;
 			}
 		}
 	});
 
 	window.pull_danmaku = function() {
-		console.log("polling danmaku");
 		$.ajax({
 			type: "GET",
 			dataType: "json",
 			headers: {
 				"Content-Type": "application/json",
-				"X-GDANMAKU-EXAM-KEY": exam_passwd
+				"X-GDANMAKU-EXAM-KEY": danmakuVue.exam_passwd
 			},
 			url: "{{ url_for('api_danmaku_to_exam', cname=channel.name)}}",
 			success: function(resp) {
 				$.each(resp, function(i, dm){
-					console.log(dm);
 					var danmaku = {
 						'content': dm.text,
 						'color': dm.style,
 						'position': dm.position
 					}
 					new_danmaku(danmaku);
-					// post_danmaku(danmaku);
 				});
-				// post_danmaku(resp[0]);
 				window.setTimeout(window.pull_danmaku, 0);
 			},
 			statusCode: {
 				403: function() {
-					show_error("密码有误，请刷新重设！");
+					danmakuVue.show_error("密码有误，请刷新重设！");
 				}
 			}
 		});
 	}
 	
-	console.log(exam_passwd);
-	if (exam_passwd) {
+	if (danmakuVue.exam_passwd) {
 		window.setTimeout(window.pull_danmaku, 50);
 	}
 

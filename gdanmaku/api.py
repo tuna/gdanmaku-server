@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 import json
 from flask import request, g, Response
+import gevent
 from . import app
 from .shared import RE_INVALID, DM_COLORS, DM_POSITIONS
 
@@ -127,6 +128,7 @@ def api_post_danmaku(cname):
         channel.new_danmaku(danmaku)
     else:
         if valid_exam_client:
+            # gevent.sleep(1)
             channel.new_danmaku(danmaku)
         else:
             channel.new_danmaku_exam(danmaku)
