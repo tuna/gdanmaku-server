@@ -86,7 +86,7 @@ def api_post_danmaku(cname):
     if not valid_exam_client:
         _token = request.headers.get("X-GDANMAKU-TOKEN")
         if _token is None:
-            return "Forbidden", 403
+            return "Token is required", 400
 
         try:
             ttype, token = _token.split(':')
@@ -95,8 +95,7 @@ def api_post_danmaku(cname):
 
         if ttype == "WEB":
             if not channel.verify_token(token):
-                # TODO: use an appropiate code
-                return "Forbidden", 403
+                return "Invalid Token, lost synchronization", 428
             res['token'] = channel.gen_web_token()
         elif ttype == "APP":
             # TODO: Implement
@@ -108,7 +107,10 @@ def api_post_danmaku(cname):
         content = form['content']
     except KeyError:
         return "Bad Request", 400
-    if RE_INVALID.search(content) or (1 > len(content.strip()) > 128):
+
+    if (RE_INVALID.search(content) or
+            (len(content.strip()) < 1) or
+            (len(content.strip()) > 128)):
         return "Bad Request", 400
 
     style = form.get("color", "blue")

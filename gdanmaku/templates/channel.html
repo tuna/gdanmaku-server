@@ -2,12 +2,103 @@
 {% block title %}{{channel.desc}}{% endblock %}
 
 {% block body %}
-<div class="row">
-	{% if language == "zh_CN" %}
-		{% include "zh_CN/channel.html"%}
-	{% else %}
-		{% include "en/channel.html"%}
-	{% endif %}
+<div class="row" id="danmaku-channel">
+	<div class="col-md-8 col-md-offset-2">
+		<h2>{{channel.desc}}</h2>
+		{% if not channel.is_open and not passwd %}
+		<form class="form-inline" role="form" @submit="set_passwd" v-show="!pub_passwd">
+			<div class="form-group">
+				<label class="sr-only" for="pub_passwd">Channel Password: </label>
+				<input type="password" class="form-control" v-model="pub_passwd_buf" placeholder="频道密码">
+				<div class="btn btn-success" @click="set_passwd">Save</div>
+			</div>
+		</form>
+		{% endif %}
+
+		{% raw %}
+		<div v-show="error_msg">
+			<div class='alert alert-danger'>{{error_msg}}</div>
+		</div>
+		{% endraw %}
+	
+		{# QR code #}
+		<div class="dropdown">
+			<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+				<span class="glyphicon glyphicon-qrcode"></span>
+				<span class="caret"></span>
+			</button>
+			<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+				<li>
+					<div id="qrcode"></div>
+					<script type="text/javascript">new QRCode(document.getElementById("qrcode"), document.URL);</script>
+				</li>
+			</ul>
+		</div>
+		<div id="token">{{token}}</div>
+		
+		{# danmaku form #}
+		<form @submit="post_danmaku">
+			<div class="form-group" id="position-selection">
+				<label for="position">Position</label>
+				<div>
+					<label class="radio-inline">
+						<input type="radio" name="position" value="fly" v-model="position" checked> Fly
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="position" value="top" v-model="position"> Top
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="position" value="bottom" v-model="position"> Bottom
+					</label>
+				</div>
+			</div>
+
+			<div class="form-group" id="color-selection">
+				<label for="style">Color</label>
+				<div>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="blue" v-model="color" checked>
+						<span class="label label-blue">blue</span>
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="white" v-model="color">
+						<span class="label label-white">white</span>
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="red" v-model="color">
+						<span class="label label-red">red</span>
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="yellow" v-model="color">
+						<span class="label label-yellow">yellow</span>
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="cyan" v-model="color">
+						<span class="label label-cyan">cyan</span>
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="green" v-model="color">
+						<span class="label label-green">green</span>
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="purple" v-model="color">
+						<span class="label label-purple">purple</span>
+					</label>
+					<label class="radio-inline">
+						<input type="radio" name="style" value="black" v-model="color">
+						<span class="label label-black">black</span>
+					</label>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="danmaku">Content</label>
+				<input type="text" class="form-control" name="content" autocomplete="off" v-model="content" placeholder="Write Danmaku Content Here">
+			</div>
+
+			<input type="submit" class="btn btn-success" value="Shoot!" :disabled="disabled" />
+		</form>
+	</div>
 </div>
 {% endblock %}
 
@@ -15,55 +106,64 @@
 <script type="text/javascript">
 
 $(document).ready(function() {
-  var pub_passwd = "{{passwd}}", token=$("#token").text();
-  $('#token').remove();
-  console.log(token);
-
-  if($("#set-password").length > 0) {
-    $("#set-password").click(function() {
-      pub_passwd = $("#pub_password").val(); 
-      $("#set-password-form").addClass("hide");
-    });
-  }
-
-  var show_error = function(msg) {
-    $("#error_container").html("<div class='alert alert-danger'>" + msg + "</div>"); 
-  };
-
-
-  $('form').submit(function() {
-
-    var data = JSON.stringify({
-      content: $("#danmaku").val(),
-      position: $("#position-selection input:checked").val(),
-      color: $("#color-selection input:checked").val()
-    });
-
-    // console.log(data);
-    console.log(pub_passwd);
-    $.ajax({
-      type: "POST",
-      dataType: "json",
-      headers: {
-        "Content-Type": "application/json",
-        "X-GDANMAKU-AUTH-KEY": pub_passwd,
-        "X-GDANMAKU-TOKEN": "WEB:" + token
-      },
-      url: $('#post-danmaku').attr("action"),
-      data: data,
-      success: function(data){ 
-        $("#danmaku").val(""); 
-        token = data.token;
-      },
-      statusCode: {
-        403: function() {
-          show_error("密码有误，请刷新重设！");
-        }
-      }
-    });
-
-    return false; 
-  });
+	var channelVue = new Vue({
+		el: "#danmaku-channel",
+		data: {
+			content: "",
+			position: "",
+			color: "",
+			error_msg: "",
+			pub_passwd_buf: "",
+			pub_passwd: "{{passwd}}",
+			token: $("#token").remove().text(),
+			disabled: false
+		},
+		methods: {
+			post_danmaku: function(ev){
+				ev.preventDefault();
+				this.disabled = true;
+				var data = JSON.stringify({
+					content: this.content,
+					color: this.color,
+					position: this.position
+				});
+				$.ajax({
+					type: "POST",
+					dataType: "json",
+					headers: {
+						"Content-Type": "application/json",
+						"X-GDANMAKU-AUTH-KEY": this.pub_passwd,
+						"X-GDANMAKU-TOKEN": "WEB:" + this.token
+					},
+					url: "{{ url_for('api_post_danmaku', cname=channel.name) }}",
+					data: data,
+					success: function(data) { 
+						channelVue.token = data.token;
+						channelVue.content = "";
+						channelVue.disabled = false;
+					},
+					statusCode: {
+						403: function() {
+							channelVue.show_error("密码有误，请刷新重设！");
+						},
+						428: function() {
+							channelVue.show_error("发送过快，刷新页面！");
+						},
+						400: function() {
+							channelVue.show_error("发送请求有误，请刷新页面回炉再造！");
+						}
+					}
+				});
+			}, // post_danmaku
+			set_passwd: function(ev) {
+				ev.preventDefault();
+				this.pub_passwd = this.pub_passwd_buf;
+			},
+			show_error: function(msg) {
+				this.error_msg = msg;
+			},
+		}
+	});
 
 });
 
@@ -73,43 +173,43 @@ $(document).ready(function() {
 {% block css %}
 <style type="text/css">
 body {
-  padding-top: 40px; 
+	padding-top: 40px; 
 } 
 #qrcode {
 	padding: 20px;
 }
 .label.label-white {
-  background: #fff;
-  border: 1px solid #666;
-  color: #666; 
+	background: #fff;
+	border: 1px solid #666;
+	color: #666; 
 }
 .label.label-blue {
-  background-color: #145fc6;
+	background-color: #145fc6;
 }
 .label.label-red {
-  background-color: #e72200;
+	background-color: #e72200;
 }
 .label.label-green {
-  background-color: #04ca00;
+	background-color: #04ca00;
 }
 .label.label-cyan {
-  background-color: #0ff;
-  color: #666; 
+	background-color: #0ff;
+	color: #666; 
 }
 .label.label-yellow {
-  background-color: #fffa00;
-  color: #666; 
+	background-color: #fffa00;
+	color: #666; 
 }
 .label.label-purple {
-  background-color: #808;
+	background-color: #808;
 }
 .label.label-black {
-  background-color: #000;
+	background-color: #000;
 }
 </style>
 {% endblock %}
 
 
 {#
-vim: ft=jinja
+vim: ft=jinja sw=2 ts=2 sts=2
 #}

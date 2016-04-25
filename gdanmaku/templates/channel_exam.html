@@ -129,7 +129,6 @@ $(document).ready(function() {
 			set_exam_passwd: function(ev) {
 				ev.preventDefault();
 				this.exam_passwd = this.exam_passwd_buf;
-				exam_passwd = this.exam_passwd_buf;
 				window.setTimeout(window.poll_danmaku, 50);
 			},
 			show_error: function(msg) {
@@ -210,5 +209,5 @@ body {
 
 
 {#
-vim: ft=jinja
+vim: ft=jinja sw=2 ts=2 sts=2
 #}
