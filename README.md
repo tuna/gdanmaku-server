@@ -60,7 +60,4 @@ The official desktop client is available at https://github.com/bigeagle/danmaQ
 
 ## TODO
 
-- [x] Wechat integration
-- [ ] IRC integration
-- [ ] Rate limit
-- [ ] Plugable js for web clients
+- [ ] i18n
