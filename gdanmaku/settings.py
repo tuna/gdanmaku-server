@@ -9,15 +9,13 @@ CSRF_ENABLED = True
 
 SCRIPT_ROOT = ""
 
-QBOX_NAME = "thunics"
-
 FILE_PATH = os.path.dirname(__file__)
 
 DB_PATH = os.path.join(FILE_PATH, "db")
 MEDIA_PATH = os.path.join(FILE_PATH, "media")
 
 # DB
-REDIS_HOST = 'localhost'
+REDIS_HOST = 'redis'
 REDIS_PORT = 6379
 REDIS_DB = 1
 REDIS_PREFIX = "gd_"
