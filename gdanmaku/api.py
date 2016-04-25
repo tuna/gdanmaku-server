@@ -49,12 +49,14 @@ def api_channel_page(cname):
     pass
 
 
+# OPTIONS response to enable cross-site subscription
 @app.route("/api/v1/channels/<cname>/danmaku", methods=["OPTIONS"])
 @app.route("/api/v1.1/channels/<cname>/danmaku", methods=["OPTIONS"])
 def api_channel_options(cname):
     return jsonResponse({"status": "OK"})
 
 
+# Post danmaku
 @app.route("/api/v1/channels/<cname>/danmaku", methods=["POST"])
 def api_post_danmaku(cname):
     cm = g.channel_manager
@@ -69,25 +71,37 @@ def api_post_danmaku(cname):
         if key is None or (not channel.verify_pub_passwd(key)):
             return "Forbidden", 403
 
-    _token = request.headers.get("X-GDANMAKU-TOKEN")
-    if _token is None:
-        return "Forbidden", 403
-
-    try:
-        ttype, token = _token.split(':')
-    except ValueError:
-        return "Bad Request", 400
+    valid_exam_client = False
+    if channel.need_exam:
+        exam_key = request.headers.get("X-GDANMAKU-EXAM-KEY", None)
+        if exam_key is not None:
+            if not channel.verify_exam_passwd(exam_key):
+                return "Bad Exam Password", 403
+            valid_exam_client = True
 
     res = {}
-    if ttype == "WEB":
-        if not channel.verify_token(token):
+
+    # if this is to exam, no need to limit rate
+    if not valid_exam_client:
+        _token = request.headers.get("X-GDANMAKU-TOKEN")
+        if _token is None:
             return "Forbidden", 403
-        res['token'] = channel.gen_web_token()
-    elif ttype == "APP":
-        # TODO: Implement
-        pass
-    else:
-        return "Bad Request", 400
+
+        try:
+            ttype, token = _token.split(':')
+        except ValueError:
+            return "Bad Request", 400
+
+        if ttype == "WEB":
+            if not channel.verify_token(token):
+                # TODO: use an appropiate code
+                return "Forbidden", 403
+            res['token'] = channel.gen_web_token()
+        elif ttype == "APP":
+            # TODO: Implement
+            pass
+        else:
+            return "Bad Request", 400
 
     try:
         content = form['content']
@@ -112,16 +126,10 @@ def api_post_danmaku(cname):
     if not channel.need_exam:
         channel.new_danmaku(danmaku)
     else:
-        exam_key = request.headers.get("X-GDANMAKU-EXAM-KEY", None)
-        if exam_key is None:
-            # Normal User, push danmaku to exam queue
-            channel.new_danmaku_exam(danmaku)
+        if valid_exam_client:
+            channel.new_danmaku(danmaku)
         else:
-            if not channel.verify_exam_passwd(exam_key):
-                return "Bad Exam Password", 403
-            else:
-                # pass
-                channel.new_danmaku(danmaku)
+            channel.new_danmaku_exam(danmaku)
 
     res['ret'] = "OK"
     return jsonResponse(res)
@@ -153,7 +161,7 @@ def api_danmaku_to_exam(cname):
     if channel is None:
         return "Not Found", 404
 
-    key = request.headers.get("X-GDANMAKU-AUTH-KEY", "")
+    key = request.headers.get("X-GDANMAKU-EXAM-KEY", "")
     if not channel.verify_exam_passwd(key):
         return "Forbidden", 403
 

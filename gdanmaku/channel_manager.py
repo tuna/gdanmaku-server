@@ -88,6 +88,7 @@ class Channel(object):
         self.exam_passwd = generate_password_hash(exam_passwd) \
             if exam_passwd else None
 
+
     @property
     def key(self):
         return self.prefix() + self.name

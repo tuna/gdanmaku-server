@@ -11,7 +11,8 @@ from .channel_manager import ChannelManager
 
 app = Flask(__name__)
 app.config.from_object(settings)
-r = redis.StrictRedis(host='localhost', port=6379, db=1)
+r = redis.StrictRedis(
+    host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
 chan_mgr = ChannelManager(app, r)
 
 with app.app_context():

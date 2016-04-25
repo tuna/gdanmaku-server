@@ -30,6 +30,24 @@ def channel_view(cname):
         language=language)
 
 
+@app.route("/channel/<cname>/examination", methods=["GET"])
+def channel_examination_view(cname):
+    cm = g.channel_manager
+    language = request.args.get("lang", session.get("language", "zh_CN"))
+    session["language"] = language
+    passwd = request.args.get("pw", "")
+    channel = cm.get_channel(cname)
+    if channel is None:
+        return "Not Found", 404
+
+    token = channel.gen_web_token()
+
+    return render_template(
+        "channel_exam.html", channel=channel,
+        token=token, passwd=passwd,
+        language=language)
+
+
 @app.route("/", methods=["GET"])
 def index():
     language = request.args.get("lang", session.get("language", "zh_CN"))
