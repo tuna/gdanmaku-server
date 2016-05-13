@@ -12,7 +12,9 @@ def jsonResponse(r):
     res.headers.add('Access-Control-Allow-Origin', '*')
     res.headers.add(
         'Access-Control-Allow-Headers',
-        'Content-Type,X-GDANMAKU-AUTH-KEY,X-GDANMAKU-SUBSCRIBER-ID')
+        'Content-Type,X-GDANMAKU-AUTH-KEY,'
+        'X-GDANMAKU-SUBSCRIBER-ID,X-GDANMAKU-TOKEN'
+    )
     res.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     return res
 
