@@ -56,4 +56,4 @@ Good luck, and have fun!
 
 ## Client
 
-The official desktop client is available at https://github.com/bigeagle/danmaQ 
+The official desktop client is available at https://github.com/tuna/danmaQ 
