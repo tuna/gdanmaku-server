@@ -78,7 +78,10 @@ def api_wechat_handle():
         "style": ch_color or 'blue',
         "position": ch_pos or 'fly',
     }
-    channel.new_danmaku(danmaku)
+    if not channel.need_exam:
+        channel.new_danmaku(danmaku)
+    else:
+        channel.new_danmaku_exam(danmaku)
 
     return "success"
 
