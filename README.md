@@ -74,5 +74,5 @@ If you want to use it in Wecaht, please set the port to 80, and open the firewal
 Good luck, and have fun!
 
 ## Client
+The official desktop client is available at https://github.com/tuna/danmaQ 
 
-The official desktop client is available at https://github.com/bigeagle/danmaQ
