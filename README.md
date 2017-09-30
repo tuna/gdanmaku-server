@@ -14,23 +14,11 @@ Install dependencies:
 
 Run `webserver.py` and open http://localhost:5000/ in your browser.
 
-风蓝接锅人员请直接看下面（
+
 
 ### I love docker
-You should have a vps first
 
-Then you need to install the docker
-
-```
- curl -fsSL get.docker.com -o get-docker.sh
- sudo sh get-docker.sh --mirror Aliyun
-```
-
-Start Docker
-```
- sudo systemctl enable docker
- sudo systemctl start docker
-```
+You should have a vps first,then you need to install the docker(More information you can find in official document of Docker)
 
 
 Clone this project
@@ -46,8 +34,7 @@ docker pull redis:alpine
 docker run --name redis -v /var/lib/redis:/data -d redis:alpine
 ```
 
-Modify `settings.py` or create a `settings_local.py` in the gdanmaku dir, and remember the `REDIS_HOST`(if you want to use it in Wechat, please Modify the Wechat_Token)
-in your settings. Let's say, `myredis`.
+Modify `settings.py` or create a `settings_local.py` in the gdanmaku dir(if you want to use it in Wechat, please modify the `WECHAT_TOKEN` in `setting.py`), and remember the `REDIS_HOST`in your settings. Let's say, `myredis`.
 
 Modify `Dockerfile`, you may want to change the `sources.list` part. Next we build the docker image of danmaku:
 
@@ -69,7 +56,7 @@ If you wanna run danmaku service as a daemon, use
 ```
 docker run -d --name danmaku --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p IP:Port:5000 danmaku:dev python2 gdanmaku/webserver.py
 ```
-If you want to use it in Wecaht, please set the port to 80, and open the firewall.(鼻青脸肿.jpg
+If you want to use it in Wechat, please set the port to 80, and open the firewall.
   
 Good luck, and have fun!
 
