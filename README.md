@@ -1,7 +1,7 @@
 gdanmaku-server
 ===============
 ![](https://img.shields.io/badge/license-GPLv3-blue.svg)
-![](https://img.shields.io/badge/python-2.7-yellowgreen.svg)
+![](https://img.shields.io/badge/python-3.7-yellowgreen.svg)
 
 Web-based danmaku server
 
@@ -45,7 +45,7 @@ docker build --tag danmaku:dev .
 We need to mount the code as volume to the docker container, and link redis to it. Try
 
 ```
-docker run -it --rm --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p IP:Port:5000 danmaku:dev python2 gdanmaku/webserver.py
+docker run -it --rm --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p IP:Port:5000 danmaku:dev python3 gdanmaku/webserver.py
 ```
 If failed please check the path (use pwd under gdanmaku-server to show the path), then change the path of the command.
 
@@ -54,7 +54,7 @@ Open your browser and visit <http://IP:port/>, you should see the danmaku web pa
 If you wanna run danmaku service as a daemon, use
 
 ```
-docker run -d --name danmaku --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p IP:Port:5000 danmaku:dev python2 gdanmaku/webserver.py
+docker run -d --name danmaku --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p IP:Port:5000 danmaku:dev python3 gdanmaku/webserver.py
 ```
 If you want to use it in Wechat, please set the port to 80, and open the firewall.
   

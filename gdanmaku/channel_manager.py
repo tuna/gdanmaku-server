@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import json
 import binascii
@@ -22,7 +22,7 @@ class Subscriber(object):
     @classmethod
     def refresh(cls, cname, sub_id):
         key = cls.prefix(cname) + sub_id
-        ttl = int(g.r.get(key).split(":")[1])
+        ttl = int(g.r.get(key).decode().split(":")[1])
         g.r.expire(key, ttl)
         bkey = cls.buffer(cname, sub_id)
         if g.r.exists(bkey):
@@ -45,7 +45,7 @@ class Token(object):
 
     @classmethod
     def new(cls, chan, rate=0):
-        token = binascii.hexlify(os.urandom(8))
+        token = binascii.hexlify(os.urandom(8)).decode()
         key = cls.TOKEN_PREFIX + token
         val = {'c': chan.name, 'r': rate}
         ttl = chan.ttl()
@@ -172,7 +172,7 @@ class Channel(object):
 
     def new_danmaku(self, danmaku):
         for st, c in self.subscribers:
-            sname, _ = st.split(":")
+            sname, _ = st.decode().split(":")
             bname = Subscriber.buffer(self.name, sname)
             if g.r.ttl(bname) < 0:
                 g.r.expire(bname, g.r.ttl(c))
@@ -191,7 +191,7 @@ class Channel(object):
         if g.r.exists(bname):
             msg = g.r.lrange(bname, 0, -1)
             g.r.delete(bname)
-            return map(lambda x: json.loads(x), msg)
+            return [json.loads(x) for x in msg]
 
         ret = g.r.blpop(bname, timeout=5)
         if ret is None:

@@ -1,4 +1,4 @@
-FROM python:2.7-alpine
+FROM python:3.7-alpine
 
 RUN adduser -S danmaku
 USER danmaku
@@ -14,9 +14,9 @@ USER root
 RUN apk add --update --no-cache --virtual .build-deps \
 	gcc libc-dev linux-headers
 
-RUN pip2 install --upgrade pip setuptools && \
-	pip2 install cython && \
-	pip2 install -r /data/requirements.txt
+RUN pip3 install --upgrade pip setuptools && \
+	pip3 install cython && \
+	pip3 install -r /data/requirements.txt
 
 RUN apk del .build-deps
 

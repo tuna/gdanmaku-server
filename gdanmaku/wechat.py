@@ -1,6 +1,6 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-from __future__ import unicode_literals
+
 from flask import current_app, request, g, make_response
 from . import app
 import xml.etree.ElementTree as ET
@@ -49,7 +49,7 @@ def api_wechat_handle():
 
     Content = xml_recv.find("Content").text
 
-    if Content[0] in (u':', u'：'):
+    if Content[0] in (':', '：'):
         return handle_command(FromUserName, ToUserName, Content)
 
     cm = g.channel_manager
