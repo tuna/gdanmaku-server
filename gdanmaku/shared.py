@@ -1,8 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import re
 
-RE_INVALID = re.compile(ur'[\udc00-\udcff]')
+RE_INVALID = re.compile(r'[\udc00-\udcff]')
 # RE_NEWLINE = re.compile(ur'\\n')
 
 DM_COLORS = {'blue', 'white', 'red', 'yellow', 'cyan', 'green', 'purple', 'black'}
