@@ -1,12 +1,12 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 from gevent.monkey import patch_all
 patch_all()
 
 import redis
-from gevent.wsgi import WSGIServer
+from gevent.pywsgi import WSGIServer
 from flask import Flask, g, request, session
-from flask.ext.babel import Babel
+from flask_babel import Babel
 
 from . import settings
 from .channel_manager import ChannelManager

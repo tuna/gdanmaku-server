@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import os
 
@@ -26,7 +26,7 @@ REDIS_PREFIX = "gd_"
 WECHAT_TOKEN = ""
 
 PERSISTENT_CHANNELS = [
-    {'name': 'demo', 'desc': u"演示频道, 发布、订阅均无需密码"},
+    {'name': 'demo', 'desc': "演示频道, 发布、订阅均无需密码"},
 ]
 
 try:
