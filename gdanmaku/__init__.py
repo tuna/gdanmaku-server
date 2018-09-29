@@ -52,7 +52,7 @@ from . import wechat
 
 def main():
     http_server = WSGIServer(('', 5000), app)
-    print("Serving at 0.0.0.0:5000")
+    print("Serving at localhost:5000")
     http_server.serve_forever()
 
 
