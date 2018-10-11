@@ -55,9 +55,12 @@ def api_wechat_handle():
     cm = g.channel_manager
 
     ch_name = g.r.get(redis_key(FromUserName + ".ch_name"))
-    ch_key = g.r.get(redis_key(FromUserName + ".ch_key")) or ''
+    ch_key = g.r.get(redis_key(FromUserName + ".ch_key"))
+    ch_key = ch_key.decode() if ch_key is not None else ''
     ch_pos = g.r.get(redis_key(FromUserName + ".ch_pos"))
+    if ch_pos is not None: ch_pos = ch_pos.decode()
     ch_color = g.r.get(redis_key(FromUserName + ".ch_color"))
+    if ch_color is not None: ch_color = ch_color.decode()
 
     if ch_name is None:
         return make_reply(
@@ -173,7 +176,7 @@ def wechat_verify():
     timestamp = query.get('timestamp', '')
     nonce = query.get('nonce', '')
     s = ''.join(sorted([timestamp, nonce, token]))
-    return hashlib.sha1(s).hexdigest() == signature
+    return hashlib.sha1(s.encode()).hexdigest() == signature
 
 
 def make_reply(touser, fromuser, content):
