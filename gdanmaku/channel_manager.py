@@ -129,6 +129,7 @@ class Channel(object):
                 'desc': self.desc,
                 'is_open': self.is_open,
                 'need_exam': self.need_exam,
+                'ttl': self.ttl()
             }
         else:
             return {
@@ -137,6 +138,7 @@ class Channel(object):
                 'sub_passwd': self.sub_passwd,
                 'pub_passwd': self.pub_passwd,
                 'exam_passwd': self.exam_passwd,
+                'ttl': self.ttl()
             }
 
     def to_json(self):
