@@ -33,7 +33,7 @@
 				</li>
 			</ul>
 		</div>
-		<div id="token">{{token}}</div>
+		{#<div id="token">{{token}}</div>#}
 		
 		{# danmaku form #}
 		<form @submit="post_danmaku">
@@ -114,7 +114,7 @@ $(document).ready(function() {
 			error_msg: "",
 			pub_passwd_buf: "",
 			pub_passwd: "{{passwd}}",
-			token: $("#token").remove().text(),
+			//token: $("#token").remove().text(),
 			disabled: false
 		},
 		methods: {
@@ -131,13 +131,13 @@ $(document).ready(function() {
 					dataType: "json",
 					headers: {
 						"Content-Type": "application/json",
-						"X-GDANMAKU-AUTH-KEY": this.pub_passwd,
-						"X-GDANMAKU-TOKEN": "WEB:" + this.token
+						"X-GDANMAKU-AUTH-KEY": this.pub_passwd
+						//, "X-GDANMAKU-TOKEN": "WEB:" + this.token
 					},
 					url: "{{ url_for('api_post_danmaku', cname=channel.name) }}",
 					data: data,
 					success: function(data) { 
-						channelVue.token = data.token;
+						//channelVue.token = data.token;
 						channelVue.content = "";
 						channelVue.disabled = false;
 					},

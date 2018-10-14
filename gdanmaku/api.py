@@ -40,7 +40,8 @@ def jsonResponse(r):
     res.headers.add(
         'Access-Control-Allow-Headers',
         'Content-Type,X-GDANMAKU-AUTH-KEY,'
-        'X-GDANMAKU-SUBSCRIBER-ID,X-GDANMAKU-TOKEN'
+        # 'X-GDANMAKU-SUBSCRIBER-ID,X-GDANMAKU-TOKEN'
+        'X-GDANMAKU-SUBSCRIBER-ID'
     )
     res.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     return res
@@ -237,7 +238,6 @@ def api_post_danmaku(cname):
     #     return "Bad Request", 400
     # TODO: cleanup code related to rate-limiting
     # since it doesn't really do anything ATM
-    token = ""
 
     try:
         kwargs = {
@@ -252,7 +252,8 @@ def api_post_danmaku(cname):
         return "Bad Request", 400
     try:
         core_api_post_danmaku(**kwargs)
-        return jsonResponse({"token": token, "ret": "OK"})
+        # return jsonResponse({"token": token, "ret": "OK"})
+        return jsonResponse({"ret": "OK"})
     except DanmakuPostException as e:
         EXCEPTION_INFO = {
             "channel not found": ("Not Found", 404),

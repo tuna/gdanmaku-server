@@ -20,11 +20,13 @@ def channel_view(cname):
     if channel is None:
         return "Not Found", 404
 
-    token = channel.gen_web_token()
-
+    # token = channel.gen_web_token()
+    #
+    # return render_template(
+    #     "channel.html", channel=channel,
+    #     token=token, passwd=passwd)
     return render_template(
-        "channel.html", channel=channel,
-        token=token, passwd=passwd)
+        "channel.html", channel=channel, passwd=passwd)
 
 
 @app.route("/channel/<cname>/examination", methods=["GET"])
@@ -37,12 +39,15 @@ def channel_examination_view(cname):
     if channel is None:
         return "Not Found", 404
 
-    token = channel.gen_web_token()
-
+    # token = channel.gen_web_token()
+    #
+    # return render_template(
+    #     "channel_exam.html", channel=channel,
+    #     token=token, passwd=passwd,
+    #     language=language)
     return render_template(
         "channel_exam.html", channel=channel,
-        token=token, passwd=passwd,
-        language=language)
+        passwd=passwd, language=language)
 
 
 @app.route("/", methods=["GET"])
