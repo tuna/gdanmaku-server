@@ -61,8 +61,12 @@ def api_wechat_handle():
         return handle_command(FromUserName, ToUserName, Content)
 
     # handle danmaku posting
+    cname = g.r.get(redis_key(FromUserName + ".ch_name"))
+    if cname is None:
+        return make_reply(FromUserName, ToUserName,
+                          "还没有加入频道，回复\":帮助\"获取帮助。")
     kwargs = {
-        "cname": g.r.get(redis_key(FromUserName + ".ch_name")),
+        "cname": cname,
         "content": Content,
         "exam_key": None,
         "publish_key": g.r.get(redis_key(FromUserName + ".ch_key")),
@@ -85,7 +89,7 @@ def api_wechat_handle():
         except KeyError:
             if e.msgs is not None:
                 return make_reply(FromUserName, ToUserName,
-                                  "神秘问题呢，再试试？")
+                                  "神秘问题呢，回复\":帮助\"试试？")
             else:
                 return make_reply(FromUserName, ToUserName,
                                   "弹幕程序遇到神秘问题呢，问问弹幕墙的人吧。")
