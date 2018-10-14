@@ -236,8 +236,6 @@ def api_post_danmaku(cname):
     #     pass
     # else:
     #     return "Bad Request", 400
-    # TODO: cleanup code related to rate-limiting
-    # since it doesn't really do anything ATM
 
     try:
         kwargs = {

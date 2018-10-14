@@ -61,27 +61,13 @@ def api_wechat_handle():
         return handle_command(FromUserName, ToUserName, Content)
 
     # handle danmaku posting
-    # FIXME: nasty handling of bytes and str,
-    # consider adding decode_responses=True in redis.StrictRedis()
-    ch_name = g.r.get(redis_key(FromUserName + ".ch_name"))
-    if ch_name is None:
-        return make_reply(FromUserName, ToUserName,
-                          "还没有加入频道或者超时，回复\":帮助\"获取帮助。")
-    else: ch_name = ch_name.decode()
-    ch_key = g.r.get(redis_key(FromUserName + ".ch_key"))
-    if ch_key is not None: ch_key = ch_key.decode()
-    ch_pos = g.r.get(redis_key(FromUserName + ".ch_pos"))
-    if ch_pos is not None: ch_pos = ch_pos.decode()
-    ch_color = g.r.get(redis_key(FromUserName + ".ch_color"))
-    if ch_color is not None: ch_color = ch_color.decode()
-
     kwargs = {
-        "cname": ch_name,
+        "cname": g.r.get(redis_key(FromUserName + ".ch_name")),
         "content": Content,
         "exam_key": None,
-        "publish_key": ch_key,
-        "style": ch_color,
-        "position": ch_pos
+        "publish_key": g.r.get(redis_key(FromUserName + ".ch_key")),
+        "style": g.r.get(redis_key(FromUserName + ".ch_color")),
+        "position": g.r.get(redis_key(FromUserName + ".ch_pos"))
     }
 
     try:
@@ -90,7 +76,7 @@ def api_wechat_handle():
     except DanmakuPostException as e:
         EXCEPTION_INFO = {
             "channel not found":
-                "还没有加入频道或者已经关闭，回复\":帮助\"获取帮助。",
+                "还没有加入频道或者已经超时，回复\":帮助\"获取帮助。",
             "invalid publish password": "密码错误 T_T",
             "invalid content": "弹幕包含怪异字符或过长 T_T"
         }
@@ -130,13 +116,16 @@ def handle_command(FromUserName, ToUserName, Content):
                 '命令错误哦，回复":帮助"看看使用说明吧')
 
         for ch in core_api_list_channels()["channels"]:
+            # channel exists
             if ch['name'] == mchan:
+                # open channel
                 if ch['is_open']:
                     ckey = redis_key(FromUserName + '.ch_name')
                     g.r.set(ckey, mchan)
                     if ch['ttl'] > 0:
                         g.r.expire(ckey, ch['ttl'])
                     return make_reply(FromUserName, ToUserName, "加入成功")
+                # channel with publish password
                 if mpass is None or (not core_api_channel_pub_key_verify(mchan, mpass)):
                     return make_reply(FromUserName, ToUserName, "密码不对。。再试试？")
                 ckey = redis_key(FromUserName + '.ch_name')

@@ -22,7 +22,7 @@ class Subscriber(object):
     @classmethod
     def refresh(cls, cname, sub_id):
         key = cls.prefix(cname) + sub_id
-        ttl = int(g.r.get(key).decode().split(":")[1])
+        ttl = int(g.r.get(key).split(":")[1])
         g.r.expire(key, ttl)
         bkey = cls.buffer(cname, sub_id)
         if g.r.exists(bkey):
@@ -174,7 +174,7 @@ class Channel(object):
 
     def new_danmaku(self, danmaku):
         for st, c in self.subscribers:
-            sname, _ = st.decode().split(":")
+            sname, _ = st.split(":")
             bname = Subscriber.buffer(self.name, sname)
             if g.r.ttl(bname) < 0:
                 g.r.expire(bname, g.r.ttl(c))
