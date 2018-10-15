@@ -92,11 +92,12 @@ def core_api_post_danmaku(cname, content,
     :param position
     :return True
     :exception
-        DanmakuPostException: possible msgs values:
-            channel not found
-            invalid exam password
-            invalid publish password
-            invalid content
+        DanmakuPostException: useful args:
+            msgs: possible values
+                channel not found
+                invalid exam password
+                invalid publish password
+                invalid content
     """
     # does not take care of rate-limiting since
     # it is not implemented at the moment.

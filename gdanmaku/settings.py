@@ -25,12 +25,15 @@ REDIS_PREFIX = "gd_"
 # WECHAT
 WECHAT_TOKEN = ""
 
+# TELEGRAM
+TELEGRAM_TOKEN = ""
+
 PERSISTENT_CHANNELS = [
     {'name': 'demo', 'desc': "演示频道, 发布、订阅均无需密码"},
 ]
 
 try:
-    from settings_local import *
+    from .settings_local import *
 except:
     pass
 

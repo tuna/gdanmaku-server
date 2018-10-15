@@ -100,6 +100,8 @@ def handle_event(FromUserName, ToUserName, Event, EventKey=""):
         return make_reply(FromUserName, ToUserName, HELP_MSG)
     elif Event.lower() == "unsubscribe":
         g.r.delete(
+            redis_key(FromUserName + '.ch_name'),
+            redis_key(FromUserName + '.ch_key'),
             redis_key(FromUserName + '.ch_pos'),
             redis_key(FromUserName + '.ch_color')
         )

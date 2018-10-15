@@ -49,6 +49,7 @@ def get_locale():
 from . import views
 from . import api
 from . import wechat
+from . import telegram
 
 def main():
     http_server = WSGIServer(('0.0.0.0', 5000), app)
