@@ -16,7 +16,11 @@ Web-based danmaku server
     git clone https://github.com/tuna/gdanmaku-server
     cd gdanmaku-server
     ```
-2. Install openssl curl python3 if there isn't
+    
+    Pay attention to where you see this guide and what repository you are cloning from.
+    Actual repository address may differ.
+    
+2. Install `openssl` `curl` `python3` `nano` if there isn't
 
 3. Install docker and docker-compose
     ```bash
@@ -28,7 +32,7 @@ Web-based danmaku server
 4. Edit configs to your preference
 
     ```bash
-    python -c "import random,hashlib;print(hashlib.sha1(str(random.random()).encode()).hexdigest())"
+    python3 -c "import random,hashlib;print(hashlib.sha1(str(random.random()).encode()).hexdigest())"
     ```
     
     Copy the output, we will call it <SECRET> in the following easy steps.
@@ -58,14 +62,20 @@ Web-based danmaku server
     # TELEGRAM
     TELEGRAM_TOKEN = "<TELEGRAM_TOKEN>"
     ```
-    Change \<SECRET\>, \<WECHAT_TOKEN\>, \<TELEGRAM_TOKEN\> according to your situation, after that you can press <kbd>Ctrl</kbd> + <kbd>O</kbd> to save.
+    Change \<SECRET\>, \<WECHAT_TOKEN\>, \<TELEGRAM_TOKEN\> according to your situation.
+    
+    After that you can press <kbd>Ctrl</kbd> + <kbd>O</kbd> to save and <kbd>Ctrl</kbd> + <kbd>X</kbd> to exit.
     
 5. Run the script
     ```bash
     chmod +x ./easy_setup.sh
-    ./easy_setup.sh
+    sudo ./easy_setup.sh
     ```
     Wait until everything finished.
+    
+    > If you have trouble building docker image in executing the script above,
+    you can try uncommenting the lines commented in PROJECT_ROOT_DIR/Dockerfile
+
 
 6. Edit Wechat Subscription Account if necessary
 

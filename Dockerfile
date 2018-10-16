@@ -16,7 +16,6 @@ RUN apk add --update --no-cache --virtual .build-deps \
 	gcc libc-dev linux-headers
 
 RUN pip3 install --upgrade pip setuptools && \
-#	pip3 install cython && \
 	pip3 install -r /app/requirements.txt
 
 RUN apk del .build-deps
