@@ -22,12 +22,15 @@ Web-based danmaku server
     
 2. Install `openssl` `curl` `python3` `nano` if there isn't
 
-3. Install docker and docker-compose
+3. Install `docker` and `docker-compose` if there isn't
     ```bash
     sudo snap install docker
     sudo curl -L --fail https://github.com/docker/compose/releases/download/1.22.0/run.sh -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
     ```
+    
+    > We recommend you use docker pre-installed images from your VPS provider 
+    since there are many caveats when installing them yourself. 
 
 4. Edit configs to your preference
 
@@ -35,14 +38,14 @@ Web-based danmaku server
     python3 -c "import random,hashlib;print(hashlib.sha1(str(random.random()).encode()).hexdigest())"
     ```
     
-    Copy the output, we will call it <SECRET> in the following easy steps.
+    Copy the output, we will call it \<SECRET\> in the following easy steps.
     
     ```bash
     curl -4 icanhazip.com
     ```
     This should be your public ip, we will use it in the following steps.
     
-    If you want to use Wechat, log into your Wechat Subscription Account, get your Token.
+    If you want to use Wechat, log into your Wechat Subscription Account, get your `Token`.
     
     If you want to use telegram, get your telegram token.
     Now we can start editing configs
@@ -66,7 +69,7 @@ Web-based danmaku server
     
     After that you can press <kbd>Ctrl</kbd> + <kbd>O</kbd> to save and <kbd>Ctrl</kbd> + <kbd>X</kbd> to exit.
     
-5. Run the script
+5. Run the script and open corresponding ports
     ```bash
     chmod +x ./easy_setup.sh
     sudo ./easy_setup.sh
@@ -76,10 +79,13 @@ Web-based danmaku server
     > If you have trouble building docker image in executing the script above,
     you can try uncommenting the lines commented in PROJECT_ROOT_DIR/Dockerfile
 
+    Then open port `80`, `443` in your VPS according to your OS and VPS provider.
+    
+    > If you do not use telegram support, then it is okay to keep port `443` closed. 
 
 6. Edit Wechat Subscription Account if necessary
 
-    Change URL in your account settings to 
+    Change `URL` in your account settings to 
     ```
     http://<PUBLIC_IP>/api/wechat
     ```
@@ -96,14 +102,20 @@ Install dependencies:
 
 Run `webserver.py` and open http://localhost:5000/ in your browser.
 
+> Use this method only if you want to see what's under the hood. 
+To actually host this server, please use docker instead.
 
+### Docker the hard way
 
-### I love docker
-
-You should have a vps first,then you need to install the docker(More information you can find in official document of Docker)
+You should have a vps first, then you need to install the docker if you do not have one.
+> You can find help in [Prepare your Docker Environment](https://docs.docker.com/get-started/#prepare-your-docker-environment)
+or your VPS provider's knowledge base.
 
 
 Clone this project
+
+Pay attention to where you see this guide and what repository you are cloning from.
+    Actual repository address may differ.
 ```
 git clone https://github.com/tuna/gdanmaku-server
 cd gdanmaku-server
@@ -116,7 +128,10 @@ docker pull redis:alpine
 docker run --name redis -v /var/lib/redis:/data -d redis:alpine
 ```
 
-Modify `settings.py` or create a `settings_local.py` in the gdanmaku dir(if you want to use it in Wechat, please modify the `WECHAT_TOKEN` in `setting.py`), and remember the `REDIS_HOST`in your settings. Let's say, `myredis`.
+Modify `settings.py` in dir `gdanmaku`, remember `REDIS_HOST`in your settings i.e. `myredis`.
+
+>If you want to use it in Wechat, please modify the `WECHAT_TOKEN` in `setting.py`.
+Change `TELEGRAM_TOKEN` as well if you want to utilize telegram bot.
 
 Modify `Dockerfile`, you may want to change the `sources.list` part. Next we build the docker image of danmaku:
 
@@ -124,12 +139,11 @@ Modify `Dockerfile`, you may want to change the `sources.list` part. Next we bui
 docker build --tag danmaku:dev .
 ```
 
-We need to mount the code as volume to the docker container, and link redis to it. Try
+We need to link redis to it. Try:
 
 ```
-docker run -it --rm --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p IP:Port:5000 danmaku:dev python3 gdanmaku/webserver.py
+docker run -it --rm --link redis:myredis -p IP:Port:5000 danmaku:dev python3 gdanmaku/webserver.py
 ```
-If failed please check the path (use pwd under gdanmaku-server to show the path), then change the path of the command.
 
 Open your browser and visit <http://IP:port/>, you should see the danmaku web page.
 
@@ -138,7 +152,12 @@ If you wanna run danmaku service as a daemon, use
 ```
 docker run -d --name danmaku --link redis:myredis -v /path/to/gdanmaku-server:/data/gdanmaku -p IP:Port:5000 danmaku:dev python3 gdanmaku/webserver.py
 ```
-If you want to use it in Wechat, please set the port to 80, and open the firewall.
+If you want to use it in Wechat alone, please set `port` to 80, and open the firewall.
+
+>If you want to use it in Telegram, however, you need to setup reverse proxy and a certificate besides set `port` to 5000.
+>
+>Here are the links for [Telegram Webhook Setup Tutorial](https://core.telegram.org/bots/webhooks) in your convenience.
+>You may find `docker_conf/easy_setup.sh` and `docker_conf/nginx.conf` helpful.
   
 Good luck, and have fun!
 
