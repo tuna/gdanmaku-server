@@ -46,8 +46,9 @@ def get_locale():
     session["language"] = language
     return language
 
+
 from . import views
-from . import api
+from . import webapi
 from . import wechat
 from . import telegram
 

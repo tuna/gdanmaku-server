@@ -3,9 +3,8 @@
 
 from flask import current_app, request, g, make_response
 from . import app
-from .api import DanmakuPostException
-from .api import core_api_post_danmaku, core_api_list_channels, \
-    core_api_channel_pub_key_verify
+from .api import DanmakuPostException, core_api_list_channels, core_api_channel_pub_key_verify, \
+    core_api_post_danmaku
 import xml.etree.ElementTree as ET
 import re
 import hashlib
