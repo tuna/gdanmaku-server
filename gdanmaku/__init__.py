@@ -14,7 +14,7 @@ from .channel_manager import ChannelManager
 app = Flask(__name__)
 app.config.from_object(settings)
 r = redis.StrictRedis(
-    host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+    host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB, decode_responses=True)
 chan_mgr = ChannelManager(app, r)
 
 babel = Babel(app)
@@ -46,9 +46,11 @@ def get_locale():
     session["language"] = language
     return language
 
+
 from . import views
-from . import api
+from . import webapi
 from . import wechat
+from . import telegram
 
 def main():
     http_server = WSGIServer(('0.0.0.0', 5000), app)

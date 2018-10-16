@@ -3,6 +3,8 @@
 
 from flask import current_app, request, g, make_response
 from . import app
+from .api import DanmakuPostException, core_api_list_channels, core_api_channel_pub_key_verify, \
+    core_api_post_danmaku
 import xml.etree.ElementTree as ET
 import re
 import hashlib
@@ -30,17 +32,21 @@ def redis_key(key):
 
 @app.route("/api/wechat", methods=["GET", "POST"])
 def api_wechat_handle():
+    # verify whether it is sent by wechat
     if not wechat_verify():
         return "BAD TOKEN", 400
 
+    # respond to echo
     if request.method == 'GET':
         echostr = request.args.get('echostr', '')
         return echostr
 
+    # obtain info from request data
     xml_recv = ET.fromstring(request.data)
     ToUserName = xml_recv.find("ToUserName").text
     FromUserName = xml_recv.find("FromUserName").text
 
+    # handle special event related to wechat
     if xml_recv.find("MsgType").text == "event":
         event = xml_recv.find("Event").text
         event_key = xml_recv.find("EventKey")
@@ -49,44 +55,43 @@ def api_wechat_handle():
 
     Content = xml_recv.find("Content").text
 
+    # handle command sent by end-user
     if Content[0] in (':', '：'):
         return handle_command(FromUserName, ToUserName, Content)
 
-    cm = g.channel_manager
-
-    ch_name = g.r.get(redis_key(FromUserName + ".ch_name"))
-    ch_key = g.r.get(redis_key(FromUserName + ".ch_key"))
-    ch_key = ch_key.decode() if ch_key is not None else ''
-    ch_pos = g.r.get(redis_key(FromUserName + ".ch_pos"))
-    if ch_pos is not None: ch_pos = ch_pos.decode()
-    ch_color = g.r.get(redis_key(FromUserName + ".ch_color"))
-    if ch_color is not None: ch_color = ch_color.decode()
-
-    if ch_name is None:
-        return make_reply(
-            FromUserName,
-            ToUserName,
-            "还没有加入频道或者超时，回复\":帮助\"获取帮助。"
-        )
-
-    channel = cm.get_channel(ch_name)
-    if channel is None:
-        return make_reply(FromUserName, ToUserName, "频道已經关闭了 T_T")
-
-    if not channel.is_open and not channel.verify_pub_passwd(ch_key):
-        return make_reply(FromUserName, ToUserName, "密码错误 T_T")
-
-    danmaku = {
-        "text": Content,
-        "style": ch_color or 'blue',
-        "position": ch_pos or 'fly',
+    # handle danmaku posting
+    cname = g.r.get(redis_key(FromUserName + ".ch_name"))
+    if cname is None:
+        return make_reply(FromUserName, ToUserName,
+                          "还没有加入频道，回复\":帮助\"获取帮助。")
+    kwargs = {
+        "cname": cname,
+        "content": Content,
+        "exam_key": None,
+        "publish_key": g.r.get(redis_key(FromUserName + ".ch_key")),
+        "style": g.r.get(redis_key(FromUserName + ".ch_color")),
+        "position": g.r.get(redis_key(FromUserName + ".ch_pos"))
     }
-    if not channel.need_exam:
-        channel.new_danmaku(danmaku)
-    else:
-        channel.new_danmaku_exam(danmaku)
 
-    return "success"
+    try:
+        core_api_post_danmaku(**kwargs)
+        return "success"
+    except DanmakuPostException as e:
+        EXCEPTION_INFO = {
+            "channel not found":
+                "还没有加入频道或者已经超时，回复\":帮助\"获取帮助。",
+            "invalid publish password": "密码错误 T_T",
+            "invalid content": "弹幕包含怪异字符或过长 T_T"
+        }
+        try:
+            return make_reply(FromUserName, ToUserName, EXCEPTION_INFO[e.msgs])
+        except KeyError:
+            if e.msgs is not None:
+                return make_reply(FromUserName, ToUserName,
+                                  "神秘问题呢，回复\":帮助\"试试？")
+            else:
+                return make_reply(FromUserName, ToUserName,
+                                  "弹幕程序遇到神秘问题呢，问问弹幕墙的人吧。")
 
 
 def handle_event(FromUserName, ToUserName, Event, EventKey=""):
@@ -94,6 +99,8 @@ def handle_event(FromUserName, ToUserName, Event, EventKey=""):
         return make_reply(FromUserName, ToUserName, HELP_MSG)
     elif Event.lower() == "unsubscribe":
         g.r.delete(
+            redis_key(FromUserName + '.ch_name'),
+            redis_key(FromUserName + '.ch_key'),
             redis_key(FromUserName + '.ch_pos'),
             redis_key(FromUserName + '.ch_color')
         )
@@ -102,7 +109,6 @@ def handle_event(FromUserName, ToUserName, Event, EventKey=""):
 
 
 def handle_command(FromUserName, ToUserName, Content):
-    cm = g.channel_manager
 
     # 加入频道
     match = cmd_re_join.match(Content)
@@ -114,31 +120,28 @@ def handle_command(FromUserName, ToUserName, Content):
                 ToUserName,
                 '命令错误哦，回复":帮助"看看使用说明吧')
 
-        channel = cm.get_channel(mchan)
-        ttl = g.r.ttl(channel.key)
-        if channel is None:
-            return make_reply(FromUserName, ToUserName, "木有这个频道。。。")
-
-        if channel.is_open:
-            ckey = redis_key(FromUserName + '.ch_name')
-            g.r.set(ckey, mchan)
-            if ttl > 0:
-                g.r.expire(ckey, ttl)
-            return make_reply(FromUserName, ToUserName, "加入成功")
-
-        # 加密频道
-        if mpass is None or (not channel.verify_pub_passwd(mpass)):
-            return make_reply(FromUserName, ToUserName, "密码不对。。在试试？")
-
-        ckey = redis_key(FromUserName + '.ch_name')
-        pkey = redis_key(FromUserName + '.ch_key')
-        g.r.set(ckey, mchan)
-        g.r.set(pkey, mpass)
-        if ttl > 0:
-            g.r.expire(ckey, ttl)
-            g.r.expire(pkey, ttl)
-
-        return make_reply(FromUserName, ToUserName, "设置通道成功，发射吧")
+        for ch in core_api_list_channels()["channels"]:
+            # channel exists
+            if ch['name'] == mchan:
+                # open channel
+                if ch['is_open']:
+                    ckey = redis_key(FromUserName + '.ch_name')
+                    g.r.set(ckey, mchan)
+                    if ch['ttl'] > 0:
+                        g.r.expire(ckey, ch['ttl'])
+                    return make_reply(FromUserName, ToUserName, "加入成功")
+                # channel with publish password
+                if mpass is None or (not core_api_channel_pub_key_verify(mchan, mpass)):
+                    return make_reply(FromUserName, ToUserName, "密码不对。。再试试？")
+                ckey = redis_key(FromUserName + '.ch_name')
+                pkey = redis_key(FromUserName + '.ch_key')
+                g.r.set(ckey, mchan)
+                g.r.set(pkey, mpass)
+                if ch['ttl'] > 0:
+                    g.r.expire(ckey, ch['ttl'])
+                    g.r.expire(pkey, ch['ttl'])
+                return make_reply(FromUserName, ToUserName, "设置通道成功，发射吧")
+        return make_reply(FromUserName, ToUserName, "木有这个频道。。。")
 
     # 设置弹幕属性
     match = cmd_re_opt.match(Content)
