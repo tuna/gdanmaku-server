@@ -1,3 +1,4 @@
 *.pyc
 *.swp
 gdanmaku/settings_local.py
+docker_conf/settings_local.py

@@ -7,6 +7,78 @@ Web-based danmaku server
 
 ## Installation
 
+### The easy way
+
+0. Get yourself a VPS
+
+1. Clone this project
+    ```bash
+    git clone https://github.com/tuna/gdanmaku-server
+    cd gdanmaku-server
+    ```
+2. Install openssl curl python3 if there isn't
+
+3. Install docker and docker-compose
+    ```bash
+    sudo snap install docker
+    sudo curl -L --fail https://github.com/docker/compose/releases/download/1.22.0/run.sh -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    ```
+
+4. Edit configs to your preference
+
+    ```bash
+    python -c "import random,hashlib;print(hashlib.sha1(str(random.random()).encode()).hexdigest())"
+    ```
+    
+    Copy the output, we will call it <SECRET> in the following easy steps.
+    
+    ```bash
+    curl -4 icanhazip.com
+    ```
+    This should be your public ip, we will use it in the following steps.
+    
+    If you want to use Wechat, log into your Wechat Subscription Account, get your Token.
+    
+    If you want to use telegram, get your telegram token.
+    Now we can start editing configs
+    ```bash
+    cd docker_conf
+    nano settings_local.py
+    ```
+    Copy the following contents into it.
+    ```python
+    DEBUG = False
+
+    SECRET_KEY = "<SECRET>"
+
+    # WECHAT
+    WECHAT_TOKEN = "<WECHAT_TOKEN>"
+
+    # TELEGRAM
+    TELEGRAM_TOKEN = "<TELEGRAM_TOKEN>"
+    ```
+    Change \<SECRET\>, \<WECHAT_TOKEN\>, \<TELEGRAM_TOKEN\> according to your situation, after that you can press <kbd>Ctrl</kbd> + <kbd>O</kbd> to save.
+    
+5. Run the script
+    ```bash
+    chmod +x ./easy_setup.sh
+    ./easy_setup.sh
+    ```
+    Wait until everything finished.
+
+6. Edit Wechat Subscription Account if necessary
+
+    Change URL in your account settings to 
+    ```
+    http://<PUBLIC_IP>/api/wechat
+    ```
+7. Finished
+
+    Now you are all set, go to https://www.github.com/tuna/danmaQ and get a display client.
+    
+### The other way
+
 Install dependencies:
 
 - python modules: `flask`, `gevent`, `pyredis`
